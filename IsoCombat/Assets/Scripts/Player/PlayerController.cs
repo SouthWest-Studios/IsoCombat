@@ -20,18 +20,9 @@ public class PlayerController : MonoBehaviour
     public Transform playerSprite;
     public Transform playerGraphics;
 
-
-    [Header("Particles References")]
-    public ParticleSystem dieParticles;
-    public ParticleSystem dieCircleParticles;
-
-    [Header("Challenge References")]
-    public TextMeshProUGUI challengeTextIndicator;
-    public Canvas darknessCanvasChallenge;
-
     
     //Movement
-    private Camera mainCamera;
+    public Camera mainCamera;
     private Vector2 targetPosition;
     private float screenMargin = 0.5f;
 
@@ -78,11 +69,9 @@ public class PlayerController : MonoBehaviour
     void UpdateMovement()
     {
         Vector2 currentPosition = transform.position;
-        Vector2 newPosition = currentPosition;
-
         Vector3 mouseWorldPos = mainCamera.ScreenToWorldPoint(Input.mousePosition);
         targetPosition = new Vector2(mouseWorldPos.x, mouseWorldPos.y);
-        newPosition = Vector2.MoveTowards(currentPosition, targetPosition, speed * Time.deltaTime);
+        Vector2 newPosition = Vector2.MoveTowards(currentPosition, targetPosition, speed * Time.deltaTime);
         
 
 
@@ -115,8 +104,6 @@ public class PlayerController : MonoBehaviour
     {
         GetComponent<CircleCollider2D>().enabled = false;
         playerGraphics.gameObject.SetActive(false);
-        dieParticles.Emit(35);
-        dieCircleParticles.Emit(1);
         //CameraShake.Instance.ShakeCamera(0.3f, 0.2f);
     }
 

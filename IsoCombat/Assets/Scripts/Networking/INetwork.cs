@@ -1,11 +1,6 @@
 using System;
 using UnityEngine;
 
-
-
-
-public enum TransportType { TCP = 0, UDP = 1 }
-
 public interface INetwork
 {
     bool IsServer { get; }
@@ -24,3 +19,4 @@ public interface INetwork
     event Action<string> OnSystemMessage;
     void Tick();
 }
+

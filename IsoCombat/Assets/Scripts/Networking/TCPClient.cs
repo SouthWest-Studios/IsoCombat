@@ -1,6 +1,7 @@
-using System.Net.Sockets;
+﻿using System.Net.Sockets;
 using System.Net;
 using System;
+using UnityEngine.UI;
 using UnityEngine;
 
 public class TCPClient : INetwork
@@ -10,86 +11,86 @@ public class TCPClient : INetwork
     public string LocalName { get; set; }
     public int Port { get; set; } = 9050;
 
-
     public event Action<string> OnLog;
     public event Action<string> OnChatMessage;
     public event Action<string> OnSystemMessage;
 
-
     Socket _sock;
-    byte[] _buf = new byte[4096];
 
-    public void StartServer(string serverName)
-    { 
-    }
+    public void StartServer(string n) { /* no-op en cliente */ }
 
     public void StartClient(string serverIp, string clientName)
     {
         LocalName = clientName;
         _sock = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-        _sock.Blocking = true;
-        try
-        {
-            _sock.Connect(new IPEndPoint(IPAddress.Parse(serverIp), Port));
-            _sock.Blocking = false;
-            IsRunning = true;
-            Log($"Connected TCP {serverIp}:{Port}");
-            SendRaw($"HELLO:{LocalName}\n");
-        }
-        catch (Exception e)
-        {
-            Log("Connect failed: " + e.Message);
-            Stop();
-        }
-    }
+        _sock.Connect(IPAddress.Parse(serverIp), Port);
+        _sock.Blocking = false;
+        IsRunning = true;
+        SystemMsg($"Connected to {serverIp}:{Port}");
 
+
+        Send($"SYSTEM:HELLO {LocalName}");
+        SystemMsg($"[CLIENT] Connected {serverIp}:{Port} as {LocalName} id={SessionConfig.ClientId}");
+
+    }
 
     public void Tick()
     {
         if (!IsRunning || _sock == null) return;
         try
         {
-            if (!_sock.Poll(0, SelectMode.SelectRead)) return;
-            int available = _sock.Available;
-            if (available == 0) { SystemMsg("Disconnected"); Stop(); return; }
-            int recv = _sock.Receive(_buf, Math.Min(available, _buf.Length), SocketFlags.None);
-            if (recv <= 0) return;
-            var text = System.Text.Encoding.UTF8.GetString(_buf, 0, recv);
-            foreach (var line in text.Split('\n'))
+            while (_sock.Poll(0, SelectMode.SelectRead))
             {
-                if (string.IsNullOrEmpty(line)) continue;
-                if (line.StartsWith("SYSTEM:")) SystemMsg("Server: " + line.Substring(7));
-                else if (line.StartsWith("CHAT:"))
+                if (_sock.Available == 0) { SystemMsg("Disconnected"); Stop(); return; }
+                var buf = new byte[Math.Min(4096, _sock.Available)];
+                int n = _sock.Receive(buf, buf.Length, SocketFlags.None);
+                if (n <= 0) break;
+                var chunk = System.Text.Encoding.UTF8.GetString(buf, 0, n);
+                foreach (var line in chunk.Split('\n'))
                 {
-                    var p = line.Split(':');
-                    if (p.Length >= 3) OnChatMessage?.Invoke($"{p[1]}: {line.Substring(5 + p[1].Length)}");
+                    if (string.IsNullOrEmpty(line)) continue;
+                    if (line.StartsWith("SYSTEM:")) SystemMsg("Server: " + line.Substring(7));
+                    else if (line.StartsWith("CHAT:"))
+                    {
+                        var p = line.Split(':');
+                        if (p.Length >= 3) OnChatMessage?.Invoke($"{p[1]}: {line.Substring(5 + p[1].Length)}");
+                    }
                 }
             }
         }
-        catch (Exception e) { OnLog?.Invoke(e.Message); }
+        catch (Exception e) { Log(e.Message); }
     }
-
 
     public void Send(string text)
     {
-        SendRaw($"CHAT:{LocalName}:{text}\n");
-
-
         foreach (var line in text.Split('\n'))
         {
             if (string.IsNullOrEmpty(line)) continue;
-            if (line.StartsWith("SYSTEM:")) SystemMsg("Server: " + line.Substring(7));
-            else if (line.StartsWith("CHAT:"))
-            {
-                var p = line.Split(':');
-                if (p.Length >= 3) OnChatMessage?.Invoke($"{p[1]}: {line.Substring(5 + p[1].Length)}");
-            }
+            var outLine = line.StartsWith("SYSTEM:") ? line : $"CHAT:{LocalName}:{line}";
+            SendRaw(outLine + "\n");
+            if (!line.StartsWith("SYSTEM:")) OnChatMessage?.Invoke($"{LocalName}: {line}");
         }
     }
 
-    //public void Send(string text) => SendRaw($"CHAT:{LocalName}:{text}\n");
-    void SendRaw(string s) { try { _sock?.Send(System.Text.Encoding.UTF8.GetBytes(s)); } catch (Exception e) { OnLog?.Invoke(e.Message); } }
-    public void Stop() { try { _sock?.Close(); } catch (Exception e) { OnLog?.Invoke(e.Message); } _sock = null; IsRunning = false; }
+    void SendRaw(string s)
+    {
+        try
+        {
+            if (_sock == null) return;
+            var bytes = System.Text.Encoding.UTF8.GetBytes(s);
+            _sock.Send(bytes);
+        }
+        catch (Exception e) { Log(e.Message); }
+    }
+
+    public void Stop()
+    {
+        IsRunning = false;
+        try { _sock?.Shutdown(SocketShutdown.Both); } catch { }
+        try { _sock?.Close(); } catch (Exception e) { Log(e.Message); }
+        _sock = null;
+    }
+
     void Log(string s) => OnLog?.Invoke(s);
     void SystemMsg(string s) => OnSystemMessage?.Invoke(s);
 }

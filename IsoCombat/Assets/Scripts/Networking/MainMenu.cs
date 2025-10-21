@@ -9,26 +9,44 @@ public class MainMenuUI : MonoBehaviour
     public TMP_InputField nameInput;
     public TMP_InputField portInput;
 
+    public GameObject joinPopup;
+    public TMP_InputField ipJoinInput;
+
 
     void Start()
     {
         nameInput.text = SessionConfig.PlayerName;
         portInput.text = SessionConfig.Port.ToString();
         transportDropdown.value = (int)SessionConfig.Transport;
+        if (joinPopup) joinPopup.SetActive(false);
     }
 
 
     public void OnCreateRoom()
     {
         ApplySession();
-        SceneManager.LoadScene("Server");
+        SessionConfig.IsHost = true;
+        SceneManager.LoadScene("Lobby");
     }
 
 
     public void OnJoinRoom()
     {
         ApplySession();
-        SceneManager.LoadScene("Client");
+        if (joinPopup) { joinPopup.SetActive(true); ipJoinInput.text = "127.0.0.1"; }
+        //SceneManager.LoadScene("Client");
+    }
+
+    public void OnJoinPopupConnect()
+    {
+        SessionConfig.IsHost = false;
+        SessionConfig.ServerIp = string.IsNullOrEmpty(ipJoinInput.text) ? "127.0.0.1" : ipJoinInput.text;
+        SceneManager.LoadScene("Lobby");
+    }
+
+    public void OnJoinPopupCancel()
+    {
+        if (joinPopup) joinPopup.SetActive(false);
     }
 
 

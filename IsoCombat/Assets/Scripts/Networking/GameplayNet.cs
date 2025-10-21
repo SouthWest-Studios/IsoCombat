@@ -21,8 +21,14 @@ public class GameplayNet : MonoBehaviour
 
     void Start()
     {
-        net = NetRuntime.Net;
-        if (net == null) { Debug.LogError("Net == null"); enabled = false; return; }
+        var udp = SessionConfig.IsHost ? (INetwork)new UDPServer()
+                                       : (INetwork)new UDPClient();
+        udp.Port = SessionConfig.Port;
+        if (SessionConfig.IsHost) udp.StartServer(SessionConfig.PlayerName);
+        else udp.StartClient(SessionConfig.ServerIp, SessionConfig.PlayerName);
+
+        NetRuntime.Attach(udp);
+        net = udp;
 
         net.OnSystemMessage -= OnSystem;
         net.OnSystemMessage += OnSystem;
@@ -43,14 +49,10 @@ public class GameplayNet : MonoBehaviour
     {
         net?.Tick();
 
-        if (localAvatar == null)
-        {
-            Debug.LogWarning("localAvatar == null");
-            return;
-        }
+        if (localAvatar == null) return;
 
         sendTimer += Time.deltaTime;
-        if (sendTimer >= 0.05f)
+        if (sendTimer >= 0.01f)
         {
             sendTimer = 0f;
             var p = localAvatar.position;
@@ -65,8 +67,7 @@ public class GameplayNet : MonoBehaviour
                 z = r
             };
             string json = JsonUtility.ToJson(ps);
-            var msg = "SYSTEM:STATEJSON|" + json + "\n";
-            net.Send(msg);
+            net.Send("SYSTEM:STATEJSON|" + json);
         }
     }
 
@@ -81,7 +82,7 @@ public class GameplayNet : MonoBehaviour
         try { ps = JsonUtility.FromJson<PlayerState>(json); }
         catch (Exception e) { Debug.LogError($"JSON ERROR {e}"); return; }
 
-        if (ps.id == SessionConfig.ClientId) { return; }
+        if (ps.id == SessionConfig.ClientId) return;
 
         if (!avatars.TryGetValue(ps.id, out var t) || t == null)
         {

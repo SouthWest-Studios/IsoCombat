@@ -11,16 +11,13 @@ public class UDPServer : INetwork
     public string LocalName { get; set; }
     public int Port { get; set; } = 9050;
 
-
     public event Action<string> OnLog;
     public event Action<string> OnChatMessage;
     public event Action<string> OnSystemMessage;
 
-
     Socket _sock;
     byte[] _buf = new byte[4096];
     readonly HashSet<string> _peers = new HashSet<string>();
-
 
     public void StartServer(string serverName)
     {
@@ -32,11 +29,7 @@ public class UDPServer : INetwork
         Log($"UDP server *:{Port}");
     }
 
-    public void StartClient(string serverIp, string clientName)
-    { 
-    }
-
-
+    public void StartClient(string serverIp, string clientName) { }
 
     public void Tick()
     {
@@ -56,17 +49,22 @@ public class UDPServer : INetwork
         }
     }
 
-
     void HandleIncoming(IPEndPoint from, string text)
     {
         _peers.Add(from.ToString());
         foreach (var line in text.Split('\n'))
         {
             if (string.IsNullOrEmpty(line)) continue;
+
             if (line.StartsWith("HELLO:"))
             {
                 SystemMsg($"HELLO {line.Substring(6)} from {from}");
                 SendTo(from, $"SYSTEM:{LocalName}\n");
+            }
+            else if (line.StartsWith("SYSTEM:"))
+            {
+                Broadcast(line + "\n");
+                OnSystemMessage?.Invoke("Server: " + line.Substring(7));
             }
             else if (line.StartsWith("CHAT:"))
             {
@@ -77,22 +75,19 @@ public class UDPServer : INetwork
         }
     }
 
-
     void Broadcast(string payload)
     {
         var data = System.Text.Encoding.UTF8.GetBytes(payload);
         foreach (var key in _peers)
         {
             var parts = key.Split(':');
-            var ep = new IPEndPoint(System.Net.IPAddress.Parse(parts[0]), int.Parse(parts[1]));
+            var ep = new IPEndPoint(IPAddress.Parse(parts[0]), int.Parse(parts[1]));
             try { _sock.SendTo(data, ep); } catch (Exception e) { OnLog?.Invoke(e.Message); }
         }
     }
 
-
     void SendTo(IPEndPoint ep, string payload)
     { try { _sock.SendTo(System.Text.Encoding.UTF8.GetBytes(payload), ep); } catch (Exception e) { OnLog?.Invoke(e.Message); } }
-
 
     public void Send(string text)
     {
@@ -102,17 +97,18 @@ public class UDPServer : INetwork
 
             if (line.StartsWith("SYSTEM:"))
             {
-                Broadcast(line + "\n");                  // <- enviar SYSTEM a clientes
-                SystemMsg("Server: " + line.Substring(7)); // eco local en panel sistema
+                Broadcast(line + "\n");
+                SystemMsg("Server: " + line.Substring(7));
             }
             else
             {
                 var payload = $"CHAT:{LocalName}:{line}\n";
-                Broadcast(payload);                        // chat a clientes
-                OnChatMessage?.Invoke($"{LocalName}: {line}"); // eco local en chat
+                Broadcast(payload);
+                OnChatMessage?.Invoke($"{LocalName}: {line}");
             }
         }
     }
+
     public void Stop() { try { _sock?.Close(); } catch (Exception e) { OnLog?.Invoke(e.Message); } _sock = null; IsRunning = false; }
     void Log(string s) => OnLog?.Invoke(s);
     void SystemMsg(string s) => OnSystemMessage?.Invoke(s);

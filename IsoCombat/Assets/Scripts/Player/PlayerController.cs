@@ -65,18 +65,21 @@ public class PlayerController : MonoBehaviour
 
     }
 
-    
+
     void UpdateMovement()
     {
+
         Vector2 currentPosition = transform.position;
-        Vector3 mouseWorldPos = mainCamera.ScreenToWorldPoint(Input.mousePosition);
-        targetPosition = new Vector2(mouseWorldPos.x, mouseWorldPos.y);
-        Vector2 newPosition = Vector2.MoveTowards(currentPosition, targetPosition, speed * Time.deltaTime);
-        
+        Vector3 mouseWorldPos3 = mainCamera.ScreenToWorldPoint(Input.mousePosition);
+        mouseWorldPos3.z = transform.position.z;           
+        Vector2 mouseWorldPos = mouseWorldPos3;
 
+        Vector2 dir = mouseWorldPos - currentPosition;
+        if (dir.sqrMagnitude > 0.0001f)
+            transform.up = dir;                            
 
+        Vector2 newPosition = Vector2.MoveTowards(currentPosition, mouseWorldPos, speed * Time.deltaTime);
 
-        // --- Limitar dentro de la cámara ---
         float camHeight = mainCamera.orthographicSize;
         float camWidth = camHeight * mainCamera.aspect;
 

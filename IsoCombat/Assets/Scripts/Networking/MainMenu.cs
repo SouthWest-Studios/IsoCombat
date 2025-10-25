@@ -24,7 +24,7 @@ public class MainMenuUI : MonoBehaviour
     {
         ApplySession();
         SessionConfig.IsHost = true;
-        SceneManager.LoadScene("Lobby");
+        CircleTransition.instance.CloseBlackScreen("Lobby");
     }
 
 
@@ -39,7 +39,7 @@ public class MainMenuUI : MonoBehaviour
     {
         SessionConfig.IsHost = false;
         SessionConfig.ServerIp = string.IsNullOrEmpty(ipJoinInput.text) ? "127.0.0.1" : ipJoinInput.text;
-        SceneManager.LoadScene("Lobby");
+        CircleTransition.instance.CloseBlackScreen("Lobby");
     }
 
     public void OnJoinPopupCancel()

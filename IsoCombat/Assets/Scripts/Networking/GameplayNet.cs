@@ -37,6 +37,7 @@ public class GameplayNet : MonoBehaviour
         {
             localAvatar = Instantiate(playerPrefab).transform;
             localAvatar.name = $"LOCAL_{SessionConfig.PlayerName}_{SessionConfig.ClientId}";
+            localAvatar.GetComponent<PlayerController>().isPlayerLocal = true;
         }
     }
 

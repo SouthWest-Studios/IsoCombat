@@ -20,6 +20,8 @@ public class PlayerController : MonoBehaviour
     public Transform playerSprite;
     public Transform playerGraphics;
 
+    public bool isPlayerLocal = false;
+
     
     //Movement
     public Camera mainCamera;
@@ -59,7 +61,13 @@ public class PlayerController : MonoBehaviour
         }
 
         UpdateTime();
-        UpdateMovement();
+
+        if (isPlayerLocal)
+        {
+            UpdateMovement();
+        }
+
+        
         UpdateInvulnerability();
 
 

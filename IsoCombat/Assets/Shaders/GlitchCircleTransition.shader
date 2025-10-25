@@ -2,6 +2,7 @@ Shader "Custom/GlitchCircleTransition"
 {
     Properties
     {
+        _MainTex ("Texture", 2D) = "white" {}
         _Color ("Color", Color) = (0,0,0,1)  // Negro por defecto
         _Radius ("Circle Radius", Range(0.0, 1.0)) = 0
         _CenterX ("Center X", Range(0.0, 1.0)) = 0.5
@@ -25,6 +26,7 @@ Shader "Custom/GlitchCircleTransition"
             #pragma fragment frag
             #include "UnityCG.cginc"
 
+            sampler2D _MainTex;
             fixed4 _Color;
             float _Radius;
             float _CenterX;

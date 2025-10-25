@@ -1960,7 +1960,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Plei
+  m_text: Play
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 46919e3af01ba924387877685325bf01, type: 2}
   m_sharedMaterial: {fileID: -7711024846138762056, guid: 46919e3af01ba924387877685325bf01, type: 2}

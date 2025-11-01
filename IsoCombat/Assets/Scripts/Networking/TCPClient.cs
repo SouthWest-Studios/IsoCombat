@@ -1,8 +1,7 @@
-﻿using System.Net.Sockets;
+﻿using System;
+using System.Collections.Generic;
 using System.Net;
-using System;
-using UnityEngine.UI;
-using UnityEngine;
+using System.Net.Sockets;
 
 public class TCPClient : INetwork
 {
@@ -14,10 +13,12 @@ public class TCPClient : INetwork
     public event Action<string> OnLog;
     public event Action<string> OnChatMessage;
     public event Action<string> OnSystemMessage;
+    public event Action<NetMsg> OnMessage;
 
     Socket _sock;
+    List<byte> _rx = new(8192);
 
-    public void StartServer(string n) { /* no-op en cliente */ }
+    public void StartServer(string n) { }
 
     public void StartClient(string serverIp, string clientName)
     {
@@ -26,12 +27,9 @@ public class TCPClient : INetwork
         _sock.Connect(IPAddress.Parse(serverIp), Port);
         _sock.Blocking = false;
         IsRunning = true;
-        SystemMsg($"Connected to {serverIp}:{Port}");
 
-
-        Send($"SYSTEM:HELLO {LocalName}");
-        SystemMsg($"[CLIENT] Connected {serverIp}:{Port} as {LocalName} id={SessionConfig.ClientId}");
-
+        OnSystemMessage?.Invoke($"Connected to {serverIp}:{Port}");
+        SendMessage(NetOperation.SYSTEM, $"HELLO {LocalName}");
     }
 
     public void Tick()
@@ -41,56 +39,49 @@ public class TCPClient : INetwork
         {
             while (_sock.Poll(0, SelectMode.SelectRead))
             {
-                if (_sock.Available == 0) { SystemMsg("Disconnected"); Stop(); return; }
-                var buf = new byte[Math.Min(4096, _sock.Available)];
-                int n = _sock.Receive(buf, buf.Length, SocketFlags.None);
+                if (_sock.Available == 0) { OnSystemMessage?.Invoke("Disconnected"); Stop(); return; }
+                byte[] tmp = new byte[Math.Min(8192, _sock.Available)];
+                int n = _sock.Receive(tmp, tmp.Length, SocketFlags.None);
                 if (n <= 0) break;
-                var chunk = System.Text.Encoding.UTF8.GetString(buf, 0, n);
-                foreach (var line in chunk.Split('\n'))
+
+                _rx.AddRange(new ArraySegment<byte>(tmp, 0, n));
+
+                while (NetCodec.TryDecodeTcp(ref _rx, out var msg))
                 {
-                    if (string.IsNullOrEmpty(line)) continue;
-                    if (line.StartsWith("SYSTEM:")) SystemMsg("Server: " + line.Substring(7));
-                    else if (line.StartsWith("CHAT:"))
+
+                    switch (msg.op)
                     {
-                        var p = line.Split(':');
-                        if (p.Length >= 3) OnChatMessage?.Invoke($"{p[1]}: {line.Substring(5 + p[1].Length)}");
+                        case NetOperation.CHAT:
+                            OnChatMessage?.Invoke(msg.payload);
+                            break;
+                        case NetOperation.SYSTEM:
+                            OnSystemMessage?.Invoke("Server: " + msg.payload);
+                            break;
                     }
+                    OnMessage?.Invoke(msg);
                 }
             }
         }
-        catch (Exception e) { Log(e.Message); }
+        catch (Exception e) { OnLog?.Invoke(e.Message); }
     }
 
-    public void Send(string text)
-    {
-        foreach (var line in text.Split('\n'))
-        {
-            if (string.IsNullOrEmpty(line)) continue;
-            var outLine = line.StartsWith("SYSTEM:") ? line : $"CHAT:{LocalName}:{line}";
-            SendRaw(outLine + "\n");
-            if (!line.StartsWith("SYSTEM:")) OnChatMessage?.Invoke($"{LocalName}: {line}");
-        }
-    }
+    public void Send(string text) => SendMessage(NetOperation.CHAT, $"{LocalName}: {text}");
 
-    void SendRaw(string s)
+    public void SendMessage(NetOperation op, string payload)
     {
         try
         {
-            if (_sock == null) return;
-            var bytes = System.Text.Encoding.UTF8.GetBytes(s);
-            _sock.Send(bytes);
+            var bytes = NetCodec.Encode(new NetMsg { op = op, payload = payload }, NetTransport.TCP);
+            _sock?.Send(bytes);
         }
-        catch (Exception e) { Log(e.Message); }
+        catch (Exception e) { OnLog?.Invoke(e.Message); }
     }
 
     public void Stop()
     {
         IsRunning = false;
         try { _sock?.Shutdown(SocketShutdown.Both); } catch { }
-        try { _sock?.Close(); } catch (Exception e) { Log(e.Message); }
+        try { _sock?.Close(); } catch { }
         _sock = null;
     }
-
-    void Log(string s) => OnLog?.Invoke(s);
-    void SystemMsg(string s) => OnSystemMessage?.Invoke(s);
 }

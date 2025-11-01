@@ -7,7 +7,7 @@ public struct PlayerState
 {
     public string id;
     public string name;
-    public float x, y, z;
+    public float x, y, rotation;
 }
 
 public class GameplayNet : MonoBehaviour
@@ -30,8 +30,8 @@ public class GameplayNet : MonoBehaviour
         NetRuntime.Attach(udp);
         net = udp;
 
-        net.OnSystemMessage -= OnSystem;
-        net.OnSystemMessage += OnSystem;
+        net.OnMessage -= OnMsg;
+        net.OnMessage += OnMsg;
 
         if (localAvatar == null && playerPrefab != null)
         {
@@ -43,7 +43,7 @@ public class GameplayNet : MonoBehaviour
 
     void OnDestroy()
     {
-        if (net != null) net.OnSystemMessage -= OnSystem;
+        if (net != null) net.OnMessage -= OnMsg;
     }
 
     void Update()
@@ -53,34 +53,31 @@ public class GameplayNet : MonoBehaviour
         if (localAvatar == null) return;
 
         sendTimer += Time.deltaTime;
-        if (sendTimer >= 0.01f)
+        if (sendTimer >= 0.01f) // <-- Limite para enviar datos cada x tiempo
         {
             sendTimer = 0f;
-            var p = localAvatar.position;
-            var r = localAvatar.rotation.eulerAngles.z;
+            Vector2 p = localAvatar.position;
+            float r = localAvatar.rotation.eulerAngles.z;
 
-            var ps = new PlayerState
+            PlayerState ps = new PlayerState
             {
                 id = SessionConfig.ClientId,
                 name = SessionConfig.PlayerName,
                 x = p.x,
                 y = p.y,
-                z = r
+                rotation = r
             };
             string json = JsonUtility.ToJson(ps);
-            net.Send("SYSTEM:STATEJSON|" + json);
+            net.SendMessage(NetOperation.STATE, json);
         }
     }
 
-    void OnSystem(string s)
+    void OnMsg(NetMsg m)
     {
-        int k = s.IndexOf("STATEJSON|", StringComparison.Ordinal);
-        if (k < 0) return;
-
-        string json = s.Substring(k + "STATEJSON|".Length);
+        if (m.op != NetOperation.STATE) return;
 
         PlayerState ps;
-        try { ps = JsonUtility.FromJson<PlayerState>(json); }
+        try { ps = JsonUtility.FromJson<PlayerState>(m.payload); }
         catch (Exception e) { Debug.LogError($"JSON ERROR {e}"); return; }
 
         if (ps.id == SessionConfig.ClientId) return;
@@ -92,6 +89,6 @@ public class GameplayNet : MonoBehaviour
             avatars[ps.id] = t;
         }
         t.position = new Vector3(ps.x, ps.y, 0f);
-        t.rotation = Quaternion.Euler(0f, 0f, ps.z);
+        t.rotation = Quaternion.Euler(0f, 0f, ps.rotation);
     }
 }

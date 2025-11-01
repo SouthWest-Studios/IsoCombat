@@ -32,7 +32,7 @@ public class LobbyController : MonoBehaviour
     public void OnClickPlay()
     {
 
-        _net.Send("SYSTEM:__PLAY__");
+        _net.SendMessage(NetOperation.SYSTEM, "__PLAY__");
         UnityEngine.SceneManagement.SceneManager.LoadScene("Gameplay");
     }
 

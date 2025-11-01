@@ -1,7 +1,7 @@
-using System.Collections.Generic;
-using System.Net.Sockets;
-using System.Net;
 using System;
+using System.Collections.Generic;
+using System.Net;
+using System.Net.Sockets;
 using UnityEngine;
 
 public class UDPServer : INetwork
@@ -14,10 +14,10 @@ public class UDPServer : INetwork
     public event Action<string> OnLog;
     public event Action<string> OnChatMessage;
     public event Action<string> OnSystemMessage;
+    public event Action<NetMsg> OnMessage;
 
     Socket _sock;
-    byte[] _buf = new byte[4096];
-    readonly HashSet<string> _peers = new HashSet<string>();
+    readonly HashSet<string> _peers = new();
 
     public void StartServer(string serverName)
     {
@@ -26,7 +26,7 @@ public class UDPServer : INetwork
         _sock.Blocking = false;
         _sock.Bind(new IPEndPoint(IPAddress.Any, Port));
         IsRunning = true;
-        Log($"UDP server *:{Port}");
+        OnLog?.Invoke($"UDP server *:{Port}");
     }
 
     public void StartClient(string serverIp, string clientName) { }
@@ -34,50 +34,41 @@ public class UDPServer : INetwork
     public void Tick()
     {
         if (!IsRunning) return;
+        byte[] buf = new byte[65535];
         while (true)
         {
             try
             {
                 if (!_sock.Poll(0, SelectMode.SelectRead)) break;
                 EndPoint from = new IPEndPoint(IPAddress.Any, 0);
-                int recv = _sock.ReceiveFrom(_buf, ref from);
+                int recv = _sock.ReceiveFrom(buf, ref from);
                 if (recv <= 0) break;
-                var text = System.Text.Encoding.UTF8.GetString(_buf, 0, recv);
-                HandleIncoming((IPEndPoint)from, text);
+
+                if (!NetCodec.TryDecodeUdp(buf, recv, out var msg)) continue;
+                var ep = (IPEndPoint)from;
+                _peers.Add(ep.ToString());
+                Route(ep, msg);
             }
             catch (Exception e) { OnLog?.Invoke(e.Message); break; }
         }
     }
 
-    void HandleIncoming(IPEndPoint from, string text)
+    void Route(IPEndPoint from, NetMsg msg)
     {
-        _peers.Add(from.ToString());
-        foreach (var line in text.Split('\n'))
+       
+        Broadcast(msg);
+        switch (msg.op)
         {
-            if (string.IsNullOrEmpty(line)) continue;
-
-            if (line.StartsWith("HELLO:"))
-            {
-                SystemMsg($"HELLO {line.Substring(6)} from {from}");
-                SendTo(from, $"SYSTEM:{LocalName}\n");
-            }
-            else if (line.StartsWith("SYSTEM:"))
-            {
-                Broadcast(line + "\n");
-                OnSystemMessage?.Invoke("Server: " + line.Substring(7));
-            }
-            else if (line.StartsWith("CHAT:"))
-            {
-                Broadcast(line + "\n");
-                var p = line.Split(':');
-                if (p.Length >= 3) OnChatMessage?.Invoke($"{p[1]}: {line.Substring(5 + p[1].Length)}");
-            }
-        }
+            case NetOperation.SYSTEM:
+                OnSystemMessage?.Invoke("Server: " + msg.payload);
+                break;
+        }        
+        OnMessage?.Invoke(msg);
     }
 
-    void Broadcast(string payload)
+    void Broadcast(NetMsg m)
     {
-        var data = System.Text.Encoding.UTF8.GetBytes(payload);
+        byte[] data = NetCodec.Encode(m, NetTransport.UDP);
         foreach (var key in _peers)
         {
             var parts = key.Split(':');
@@ -86,30 +77,28 @@ public class UDPServer : INetwork
         }
     }
 
-    void SendTo(IPEndPoint ep, string payload)
-    { try { _sock.SendTo(System.Text.Encoding.UTF8.GetBytes(payload), ep); } catch (Exception e) { OnLog?.Invoke(e.Message); } }
-
-    public void Send(string text)
+    void SendTo(IPEndPoint ep, NetMsg m)
     {
-        foreach (var line in text.Split('\n'))
-        {
-            if (string.IsNullOrEmpty(line)) continue;
+        try { _sock.SendTo(NetCodec.Encode(m, NetTransport.UDP), ep); }
+        catch (Exception e) { OnLog?.Invoke(e.Message); }
+    }
 
-            if (line.StartsWith("SYSTEM:"))
-            {
-                Broadcast(line + "\n");
-                SystemMsg("Server: " + line.Substring(7));
-            }
-            else
-            {
-                var payload = $"CHAT:{LocalName}:{line}\n";
-                Broadcast(payload);
-                OnChatMessage?.Invoke($"{LocalName}: {line}");
-            }
+    public void Send(string text) {
+        Debug.Log("No se tendria que usar el chat en UDP -> " + text);
+    }
+    
+    
+
+    public void SendMessage(NetOperation op, string payload)
+    {
+        Broadcast(new NetMsg { op = op, payload = payload });
+        switch(op)
+        {
+            case NetOperation.SYSTEM:
+                OnSystemMessage?.Invoke("Server: " + payload);
+                break;
         }
     }
 
     public void Stop() { try { _sock?.Close(); } catch (Exception e) { OnLog?.Invoke(e.Message); } _sock = null; IsRunning = false; }
-    void Log(string s) => OnLog?.Invoke(s);
-    void SystemMsg(string s) => OnSystemMessage?.Invoke(s);
 }

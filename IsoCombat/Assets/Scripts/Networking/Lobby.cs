@@ -28,7 +28,7 @@ public class Lobby : MonoBehaviour
     public void OnSendChat()
     {
         if (_net == null) return;
-        var t = chatInput.text;
+        string t = chatInput.text;
         chatInput.text = string.Empty;
         if (!string.IsNullOrEmpty(t)) _net.Send(t);
     }

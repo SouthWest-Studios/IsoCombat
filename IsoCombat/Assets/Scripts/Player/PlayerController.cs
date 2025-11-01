@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -21,6 +22,7 @@ public class PlayerController : MonoBehaviour
     public Transform playerGraphics;
 
     public bool isPlayerLocal = false;
+    public bool isDead = false;
 
     
     //Movement
@@ -50,24 +52,19 @@ public class PlayerController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Escape))
-        {
-
-        }
-
-        if (Input.GetKeyDown(KeyCode.R))
-        {
-            PlayerDie();
-        }
 
         UpdateTime();
 
         if (isPlayerLocal)
         {
-            UpdateMovement();
-        }
+            if (Input.GetKeyDown(KeyCode.R))
+            {
+                PlayerDie();
+            }
 
-        
+            UpdateMovement();
+
+        }
         UpdateInvulnerability();
 
 
@@ -113,9 +110,10 @@ public class PlayerController : MonoBehaviour
 
     void PlayerDie()
     {
-        GetComponent<CircleCollider2D>().enabled = false;
+        //GetComponent<CircleCollider2D>().enabled = false;
         playerGraphics.gameObject.SetActive(false);
         //CameraShake.Instance.ShakeCamera(0.3f, 0.2f);
+        isDead = true;
     }
 
     void UpdateTime()

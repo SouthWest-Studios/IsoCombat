@@ -8,16 +8,27 @@ public struct PlayerState
     public string id;
     public string name;
     public float x, y, rotation;
+    public bool dead;
+}
+
+[Serializable] 
+public struct GameEvent { 
+    public string type; 
+    public string id; 
 }
 
 public class GameplayNet : MonoBehaviour
 {
     public GameObject playerPrefab;
+    public bool localDead = false;
 
     INetwork net;
     readonly Dictionary<string, Transform> avatars = new();
+    readonly Dictionary<string, PlayerState> last = new();
     Transform localAvatar;
+    PlayerController pcLocal;
     float sendTimer;
+    bool matchEnded;
 
     void Start()
     {
@@ -37,7 +48,15 @@ public class GameplayNet : MonoBehaviour
         {
             localAvatar = Instantiate(playerPrefab).transform;
             localAvatar.name = $"LOCAL_{SessionConfig.PlayerName}_{SessionConfig.ClientId}";
-            localAvatar.GetComponent<PlayerController>().isPlayerLocal = true;
+            pcLocal = localAvatar.GetComponent<PlayerController>();
+            pcLocal.isPlayerLocal = true;
+
+            last[SessionConfig.ClientId] = new PlayerState
+            {
+                id = SessionConfig.ClientId,
+                name = SessionConfig.PlayerName,
+                dead = false
+            };
         }
     }
 
@@ -49,36 +68,60 @@ public class GameplayNet : MonoBehaviour
     void Update()
     {
         net?.Tick();
+        if (matchEnded) return;
 
         if (localAvatar == null) return;
+
+        if (!localDead && pcLocal.isDead)
+        {
+            localDead = true;
+            SendState(true);
+            pcLocal.enabled = false;
+            if (SessionConfig.IsHost) TryEndMatch();
+        }
 
         sendTimer += Time.deltaTime;
         if (sendTimer >= 0.01f) // <-- Limite para enviar datos cada x tiempo
         {
             sendTimer = 0f;
-            Vector2 p = localAvatar.position;
-            float r = localAvatar.rotation.eulerAngles.z;
-
-            PlayerState ps = new PlayerState
-            {
-                id = SessionConfig.ClientId,
-                name = SessionConfig.PlayerName,
-                x = p.x,
-                y = p.y,
-                rotation = r
-            };
-            string json = JsonUtility.ToJson(ps);
-            net.SendMessage(NetOperation.STATE, json);
+            SendState();
         }
+    }
+
+    void SendState(bool immediate = false)
+    {
+        if (localDead && !immediate) return; // muerto: solo se envió el STATE de muerte
+        Vector2 p = localAvatar.position;
+        float r = localAvatar.rotation.eulerAngles.z;
+
+        var ps = new PlayerState
+        {
+            id = SessionConfig.ClientId,
+            name = SessionConfig.PlayerName,
+            x = p.x,
+            y = p.y,
+            rotation = r,
+            dead = localDead
+        };
+        last[ps.id] = ps;
+        net.SendMessage(NetOperation.STATE, JsonUtility.ToJson(ps));
     }
 
     void OnMsg(NetMsg m)
     {
-        if (m.op != NetOperation.STATE) return;
+        if (m.op != NetOperation.STATE && m.op != NetOperation.SYSTEM) return;
 
-        PlayerState ps;
-        try { ps = JsonUtility.FromJson<PlayerState>(m.payload); }
-        catch (Exception e) { Debug.LogError($"JSON ERROR {e}"); return; }
+        if(m.op == NetOperation.SYSTEM)
+        {
+            if (m.op == NetOperation.SYSTEM && m.payload.StartsWith("__BACK_TO_LOBBY__"))
+                UnityEngine.SceneManagement.SceneManager.LoadScene("Lobby");
+            return;
+        }
+
+
+
+        PlayerState ps = JsonUtility.FromJson<PlayerState>(m.payload);
+        last[ps.id] = ps;
 
         if (ps.id == SessionConfig.ClientId) return;
 
@@ -88,7 +131,36 @@ public class GameplayNet : MonoBehaviour
             t.name = $"REMOTE_{ps.name}_{ps.id}";
             avatars[ps.id] = t;
         }
-        t.position = new Vector3(ps.x, ps.y, 0f);
-        t.rotation = Quaternion.Euler(0f, 0f, ps.rotation);
+
+
+        if (ps.dead)
+        {
+            SpriteRenderer r = t.GetComponentInChildren<SpriteRenderer>(); if (r) r.enabled = false;
+            PlayerController pc = t.GetComponent<PlayerController>(); if (pc) pc.enabled = false;
+        }
+        else
+        {
+            t.position = new Vector3(ps.x, ps.y, 0f);
+            t.rotation = Quaternion.Euler(0f, 0f, ps.rotation);
+        }
+
+        if (SessionConfig.IsHost) TryEndMatch();
+
+    }
+
+    void TryEndMatch()
+    {
+        if (matchEnded) return;
+        int vivos = 0; string winner = "";
+        foreach (var kv in last)
+        {
+            if (!kv.Value.dead) { vivos++; winner = kv.Key; }
+        }
+        if (vivos <= 1)
+        {
+            matchEnded = true;
+            net.SendMessage(NetOperation.SYSTEM, $"__BACK_TO_LOBBY__|{winner}");
+            UnityEngine.SceneManagement.SceneManager.LoadScene("Lobby"); // host también vuelve
+        }
     }
 }

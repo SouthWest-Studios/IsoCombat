@@ -133,7 +133,6 @@ public class PlayerController : MonoBehaviour
     public string GetTimeString()
     {
         //int totalSeconds = (Mathf.CeilToInt(PlayerRuntimeStats.instance.realTimeStats.currentMaxTime - timeCounter));
-
         //int minutes = (totalSeconds / 60);
         //int seconds = totalSeconds % 60;
 

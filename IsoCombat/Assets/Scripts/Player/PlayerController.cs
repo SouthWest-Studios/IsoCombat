@@ -38,6 +38,10 @@ public class PlayerController : MonoBehaviour
     [HideInInspector] public float invulnerabilityCoolDownTimer = 0f;
     [HideInInspector] public float invulnerabilityCoolDown = 2f;
 
+    //Physics
+    PolygonCollider2D upperBody;
+    BoxCollider2D lowerBody;
+
 
     // Start is called before the first frame update
     void Start()
@@ -140,5 +144,20 @@ public class PlayerController : MonoBehaviour
         //return string.Format("{0:00}:{1:00}", minutes, seconds);
         return "";
     }
+
+    public void TakeDamage(float amount)
+    {
+        if (isDead) return;
+
+        currentHealth -= amount;
+        currentHealth = Mathf.Max(0, currentHealth);
+
+        if (currentHealth <= 0)
+        {
+            PlayerDie();
+        }
+    }
+
+
 
 }

@@ -50,6 +50,7 @@ public class GameplayNet : MonoBehaviour
             localAvatar.name = $"LOCAL_{SessionConfig.PlayerName}_{SessionConfig.ClientId}";
             pcLocal = localAvatar.GetComponent<PlayerController>();
             pcLocal.isPlayerLocal = true;
+            AddToWinnerList(SessionConfig.ClientId + "_" + SessionConfig.PlayerName);
 
             last[SessionConfig.ClientId] = new PlayerState
             {
@@ -109,52 +110,50 @@ public class GameplayNet : MonoBehaviour
 
     void OnMsg(NetMsg m)
     {
-        if (m.op != NetOperation.STATE && m.op != NetOperation.SYSTEM) return;
 
-        if (m.op == NetOperation.SYSTEM)
+        if(m.op == NetOperation.STATE)
         {
-            Debug.Log($"[Client] Received SYSTEM message: {m.payload}");
+            PlayerState ps = JsonUtility.FromJson<PlayerState>(m.payload);
+            last[ps.id] = ps;
 
-            if (m.payload.StartsWith("__BACK_TO_LOBBY__"))
+            if (ps.id == SessionConfig.ClientId) return;
+
+            if (!avatars.TryGetValue(ps.id, out var t) || t == null)
             {
-                UnityEngine.SceneManagement.SceneManager.LoadScene("Lobby");
-            }
-            else if (m.payload.StartsWith("RESET_MATCH"))
-            {
-                net.Stop();
-                UnityEngine.SceneManagement.SceneManager.LoadScene("Gameplay");
+                t = Instantiate(playerPrefab).transform;
+                t.name = $"REMOTE_{ps.name}_{ps.id}";
+                avatars[ps.id] = t;
+                AddToWinnerList(ps.id + "_" + ps.name);
             }
 
+
+            if (ps.dead)
+            {
+                SpriteRenderer r = t.GetComponentInChildren<SpriteRenderer>(); if (r) r.enabled = false;
+                PlayerController pc = t.GetComponent<PlayerController>(); if (pc) pc.enabled = false;
+            }
+            else
+            {
+                t.position = new Vector3(ps.x, ps.y, 0f);
+                t.rotation = Quaternion.Euler(0f, 0f, ps.rotation);
+            }
+
+            if (SessionConfig.IsHost) TryEndMatch();
             return;
         }
 
-
-
-        PlayerState ps = JsonUtility.FromJson<PlayerState>(m.payload);
-        last[ps.id] = ps;
-
-        if (ps.id == SessionConfig.ClientId) return;
-
-        if (!avatars.TryGetValue(ps.id, out var t) || t == null)
+        if(m.op == NetOperation.BACK_TO_LOBBY)
         {
-            t = Instantiate(playerPrefab).transform;
-            t.name = $"REMOTE_{ps.name}_{ps.id}";
-            avatars[ps.id] = t;
+            UnityEngine.SceneManagement.SceneManager.LoadScene("Lobby");
+            return;
         }
 
-
-        if (ps.dead)
+        if(m.op == NetOperation.FINISH_MATCH)
         {
-            SpriteRenderer r = t.GetComponentInChildren<SpriteRenderer>(); if (r) r.enabled = false;
-            PlayerController pc = t.GetComponent<PlayerController>(); if (pc) pc.enabled = false;
+            net.Stop();
+            UnityEngine.SceneManagement.SceneManager.LoadScene("MidRound");
+            return;
         }
-        else
-        {
-            t.position = new Vector3(ps.x, ps.y, 0f);
-            t.rotation = Quaternion.Euler(0f, 0f, ps.rotation);
-        }
-
-        if (SessionConfig.IsHost) TryEndMatch();
 
     }
 
@@ -164,29 +163,34 @@ public class GameplayNet : MonoBehaviour
         int vivos = 0; string winner = "";
         foreach (var kv in last)
         {
-            if (!kv.Value.dead) { vivos++; winner = kv.Key; }
+            if (!kv.Value.dead) { vivos++; winner = kv.Key + "_" + kv.Value.name; }
         }
         if (vivos <= 1)
         {
             matchEnded = true;
-            if (!NetRuntime.winners.ContainsKey(winner))
-            {
-                NetRuntime.winners[winner] = 0;
-            }
+            AddToWinnerList(winner);
             NetRuntime.winners[winner] += 1;
             
 
             if (NetRuntime.winners[winner] >= 3)
             {
-                net.SendMessage(NetOperation.SYSTEM, $"__BACK_TO_LOBBY__|{winner}");
-                UnityEngine.SceneManagement.SceneManager.LoadScene("Lobby"); // host también vuelve
+                net.SendMessage(NetOperation.BACK_TO_LOBBY, "");
+                UnityEngine.SceneManagement.SceneManager.LoadScene("Lobby"); // host
             }
             else {
-                net.SendMessage(NetOperation.SYSTEM, "RESET_MATCH");
+                net.SendMessage(NetOperation.FINISH_MATCH, "");
                 net.Stop();
-                UnityEngine.SceneManagement.SceneManager.LoadScene("Gameplay"); 
+                UnityEngine.SceneManagement.SceneManager.LoadScene("MidRound");
             }
             
+        }
+    }
+
+    void AddToWinnerList(string name)
+    {
+        if (!NetRuntime.winners.ContainsKey(name))
+        {
+            NetRuntime.winners[name] = 0;
         }
     }
 }

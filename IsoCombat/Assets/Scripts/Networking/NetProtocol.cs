@@ -6,7 +6,7 @@ using UnityEngine;
 
 public enum NetTransport { TCP, UDP }
 
-public enum NetOperation { NULL, HELLO, CHAT, STATE, SYSTEM}
+public enum NetOperation { NULL, HELLO, CHAT, STATE, SYSTEM, RANK_READY, SHOW_RANK, BACK_TO_LOBBY, PLAY, FINISH_MATCH }
 
 [Serializable]
 public struct NetMsg

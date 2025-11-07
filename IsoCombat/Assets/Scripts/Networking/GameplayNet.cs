@@ -90,7 +90,7 @@ public class GameplayNet : MonoBehaviour
 
     void SendState(bool immediate = false)
     {
-        if (localDead && !immediate) return; // muerto: solo se envió el STATE de muerte
+        if (localDead && !immediate) return; // muerto: solo se envi?el STATE de muerte
         Vector2 p = localAvatar.position;
         float r = localAvatar.rotation.eulerAngles.z;
 
@@ -111,10 +111,20 @@ public class GameplayNet : MonoBehaviour
     {
         if (m.op != NetOperation.STATE && m.op != NetOperation.SYSTEM) return;
 
-        if(m.op == NetOperation.SYSTEM)
+        if (m.op == NetOperation.SYSTEM)
         {
-            if (m.op == NetOperation.SYSTEM && m.payload.StartsWith("__BACK_TO_LOBBY__"))
+            Debug.Log($"[Client] Received SYSTEM message: {m.payload}");
+
+            if (m.payload.StartsWith("__BACK_TO_LOBBY__"))
+            {
                 UnityEngine.SceneManagement.SceneManager.LoadScene("Lobby");
+            }
+            else if (m.payload.StartsWith("RESET_MATCH"))
+            {
+                net.Stop();
+                UnityEngine.SceneManagement.SceneManager.LoadScene("Gameplay");
+            }
+
             return;
         }
 
@@ -159,8 +169,24 @@ public class GameplayNet : MonoBehaviour
         if (vivos <= 1)
         {
             matchEnded = true;
-            net.SendMessage(NetOperation.SYSTEM, $"__BACK_TO_LOBBY__|{winner}");
-            UnityEngine.SceneManagement.SceneManager.LoadScene("Lobby"); // host también vuelve
+            if (!NetRuntime.winners.ContainsKey(winner))
+            {
+                NetRuntime.winners[winner] = 0;
+            }
+            NetRuntime.winners[winner] += 1;
+            
+
+            if (NetRuntime.winners[winner] >= 3)
+            {
+                net.SendMessage(NetOperation.SYSTEM, $"__BACK_TO_LOBBY__|{winner}");
+                UnityEngine.SceneManagement.SceneManager.LoadScene("Lobby"); // host también vuelve
+            }
+            else {
+                net.SendMessage(NetOperation.SYSTEM, "RESET_MATCH");
+                net.Stop();
+                UnityEngine.SceneManagement.SceneManager.LoadScene("Gameplay"); 
+            }
+            
         }
     }
 }

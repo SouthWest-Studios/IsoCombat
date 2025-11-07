@@ -23,8 +23,8 @@ public class LobbyController : MonoBehaviour
 
         if (header)
             header.text = SessionConfig.IsHost
-                ? $"Server (TCP) – {SessionConfig.PlayerName}:{SessionConfig.Port}"
-                : $"Client (TCP) – {SessionConfig.PlayerName} -> {SessionConfig.ServerIp}:{SessionConfig.Port}";
+                ? $"Server (TCP) ?{SessionConfig.PlayerName}:{SessionConfig.Port}"
+                : $"Client (TCP) ?{SessionConfig.PlayerName} -> {SessionConfig.ServerIp}:{SessionConfig.Port}";
 
         if (playButton) playButton.SetActive(_net.IsServer);
     }
@@ -33,7 +33,9 @@ public class LobbyController : MonoBehaviour
     {
 
         _net.SendMessage(NetOperation.SYSTEM, "__PLAY__");
+        NetRuntime.ResetWinners();
         UnityEngine.SceneManagement.SceneManager.LoadScene("Gameplay");
+
     }
 
     //void OnDestroy() { _net?.Stop(); }

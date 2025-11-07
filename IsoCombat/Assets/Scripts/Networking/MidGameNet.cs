@@ -19,9 +19,19 @@ public struct RankPayload {
 }
 
 
-public class MidGameNet : MonoBehaviour
+[Serializable]
+public struct PlayerRankUI
 {
     public TextMeshProUGUI text;
+    public Image rank_bar;
+}
+
+public class MidGameNet : MonoBehaviour
+{
+    //public TextMeshProUGUI text;
+    public PlayerRankUI[] rankUI;
+
+
     INetwork net;
 
     private int playerLoadedCounter = 1; //Server es +1
@@ -54,15 +64,23 @@ public class MidGameNet : MonoBehaviour
 
     void Render(Dictionary<string, int> wins)
     {
-        // Render simple: ordena por victorias desc.
-        var arr = new List<KeyValuePair<string, int>>(wins);
-        arr.Sort((a, b) => b.Value.CompareTo(a.Value));
+        var ordened = new List<KeyValuePair<string, int>>(wins);
+        ordened.Sort((a, b) => b.Key.CompareTo(a.Key));
 
-        var lines = new List<string> { "RANKING" };
-        int pos = 1;
-        foreach (var kv in arr) lines.Add($"{pos++}. {kv.Key}  - {kv.Value}");
-        if (text != null) text.text = string.Join("\n", lines);
-        else Debug.Log(string.Join("\n", lines));
+
+        int count = Mathf.Min(ordened.Count, rankUI.Length);
+        for (int i = 0; i < count; i++)
+        {
+            var e = ordened[i];
+            rankUI[i].text.text = $"{i + 1}. {e.Key.Split("_")[1]}";
+            rankUI[i].rank_bar.fillAmount = Mathf.Clamp01(e.Value / 3f);
+        }
+
+        for (int i = count; i < rankUI.Length; i++)
+        {
+            rankUI[i].text.text = "";
+            rankUI[i].rank_bar.fillAmount = 0f;
+        }
     }
 
     void OnMsg(NetMsg m)
@@ -83,16 +101,16 @@ public class MidGameNet : MonoBehaviour
             BroadcastRank();
             return;
         }
-        else if(m.op == NetOperation.BACK_TO_LOBBY)
+        else if(m.op == NetOperation.PLAY)
     {
-            UnityEngine.SceneManagement.SceneManager.LoadScene("Lobby");
+            UnityEngine.SceneManagement.SceneManager.LoadScene("Gameplay");
         }
     }
 
-    public void OnBackToLobbyButton()
+    public void OnContinueMatch()
     {
-        net.SendMessage(NetOperation.BACK_TO_LOBBY, "");
-        UnityEngine.SceneManagement.SceneManager.LoadScene("Lobby");
+        net.SendMessage(NetOperation.PLAY, "");
+        UnityEngine.SceneManagement.SceneManager.LoadScene("Gameplay");
     }
 
 

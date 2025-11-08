@@ -12,7 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 82625db19a0e1084e82b72e66f8b4a14, type: 3}
   m_Name: Upgrade_moveSpeed
   m_EditorClassIdentifier: 
-  title: + move speed
+  title: Speed+
   desc: 
-  modifiers:
-  - {fileID: 11400000, guid: 568905f3dfd74134896c2ee7ff72396e, type: 2}
+  entries:
+  - id: 1
+    op: 0
+    value: 1

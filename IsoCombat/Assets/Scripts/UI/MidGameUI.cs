@@ -23,10 +23,12 @@ public class MidGameUI : MonoBehaviour
 
     void Pick(Upgrade u)
     {
-        var list = new List<StatModEntry>();
-        foreach (var m in u.modifiers) list.AddRange(m.entries); // StatModEntry ya lo tienes en Stats.cs
-        var p = new UpgradePick { playerId = SessionConfig.ClientId, mods = list.ToArray() };
+        var p = new UpgradePick
+        {
+            playerId = SessionConfig.ClientId,
+            mods = u.entries.ToArray()
+        };
         MidGameNet.I.SendUpgradePicked(p);
-        foreach (var b in choices) b.interactable = false; // evita doble pick
+        foreach (var b in choices) b.interactable = false;
     }
 }

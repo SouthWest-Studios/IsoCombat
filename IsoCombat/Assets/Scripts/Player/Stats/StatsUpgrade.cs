@@ -5,6 +5,6 @@ using UnityEngine;
 public class Upgrade : ScriptableObject
 {
     public string title;
-    public string desc;
-    public List<StatModifier> modifiers = new();
+    [TextArea] public string desc;
+    public List<StatModEntry> entries = new();
 }

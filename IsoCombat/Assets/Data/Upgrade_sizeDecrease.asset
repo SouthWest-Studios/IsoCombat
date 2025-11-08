@@ -12,7 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 82625db19a0e1084e82b72e66f8b4a14, type: 3}
   m_Name: Upgrade_sizeDecrease
   m_EditorClassIdentifier: 
-  title: -- size
+  title: Size-
   desc: 
-  modifiers:
-  - {fileID: 11400000, guid: bd99784fed061ff4b89e2e54c008f951, type: 2}
+  entries:
+  - id: 2
+    op: 0
+    value: -0.3

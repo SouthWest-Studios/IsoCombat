@@ -15,7 +15,7 @@ public class UpgradesState : MonoBehaviour
     public void AddUpgrade(string playerId, Upgrade u)
     {
         if (!byPlayer.TryGetValue(playerId, out var list)) { list = new(); byPlayer[playerId] = list; }
-        foreach (var mod in u.modifiers) list.AddRange(mod.entries);
+        list.AddRange(u.entries);
     }
 
     public void AddMods(string playerId, IEnumerable<StatModEntry> mods)

@@ -12,7 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 82625db19a0e1084e82b72e66f8b4a14, type: 3}
   m_Name: Upgrade_maxHP
   m_EditorClassIdentifier: 
-  title: 2 more health
+  title: Health++
   desc: 
-  modifiers:
-  - {fileID: 11400000, guid: 2e655f6ca5d038047817105d2c834708, type: 2}
+  entries:
+  - id: 0
+    op: 0
+    value: 2

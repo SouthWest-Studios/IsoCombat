@@ -5,6 +5,8 @@ using UnityEngine;
 public class Upgrade : ScriptableObject
 {
     public string title;
-    [TextArea] public string desc;
+    [Range(1, 5)]
+    public int starsRarity;
     public List<StatModEntry> entries = new();
+
 }

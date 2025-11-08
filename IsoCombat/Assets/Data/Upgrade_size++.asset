@@ -10,11 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 82625db19a0e1084e82b72e66f8b4a14, type: 3}
-  m_Name: Upgrade_moveSpeed
+  m_Name: Upgrade_size++
   m_EditorClassIdentifier: 
-  title: Speed+
-  desc: 
+  title: Size++
+  starsRarity: 2
   entries:
-  - id: 1
+  - id: 2
     op: 0
-    value: 1
+    value: 0.5

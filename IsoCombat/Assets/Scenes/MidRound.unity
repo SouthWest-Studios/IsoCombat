@@ -323,13 +323,27 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   pool:
   - {fileID: 11400000, guid: a61599c397970b64494cf8b70d1e00f7, type: 2}
-  - {fileID: 11400000, guid: d50f79003a1f3ac4a872506970e2658a, type: 2}
-  - {fileID: 11400000, guid: 4a107b2e6862c2e42b23856047437d61, type: 2}
+  - {fileID: 11400000, guid: 4055911ca4162a74497c4da7f7375758, type: 2}
   - {fileID: 11400000, guid: 1b9c0170c4773144494a752c3a06d7b9, type: 2}
+  - {fileID: 11400000, guid: 2c0a4802892ef7049aaaa3d091c3a428, type: 2}
+  - {fileID: 11400000, guid: 4a107b2e6862c2e42b23856047437d61, type: 2}
+  - {fileID: 11400000, guid: 12187fc24d603e94cba42d32db2a69e1, type: 2}
+  - {fileID: 11400000, guid: d50f79003a1f3ac4a872506970e2658a, type: 2}
+  - {fileID: 11400000, guid: 68fba0217929f524684c93c95e873bc2, type: 2}
   choices:
   - {fileID: 366632695}
   - {fileID: 1554387535}
   - {fileID: 1290280881}
+  w1: 30
+  w2: 25
+  w3: 20
+  w4: 15
+  w5: 10
+  c1: {r: 1, g: 1, b: 1, a: 1}
+  c2: {r: 0, g: 1, b: 0, a: 1}
+  c3: {r: 0, g: 0, b: 1, a: 1}
+  c4: {r: 1, g: 0, b: 1, a: 1}
+  c5: {r: 1, g: 0, b: 0, a: 1}
 --- !u!1 &131164079
 GameObject:
   m_ObjectHideFlags: 0

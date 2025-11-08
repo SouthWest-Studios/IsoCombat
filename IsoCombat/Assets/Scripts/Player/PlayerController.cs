@@ -52,6 +52,8 @@ public class PlayerController : MonoBehaviour
         targetPosition = transform.position;
         timeCounter = 0;
         currentHealth = stats.Get(StatId.MaxHP);
+        float scale = stats.Get(StatId.Scale);
+        transform.localScale = new Vector3(scale, scale, scale);
         playerSprite.GetComponent<SpriteRenderer>().material.SetFloat("_FillAmount", currentHealth / stats.Get(StatId.MaxHP));
     }
 

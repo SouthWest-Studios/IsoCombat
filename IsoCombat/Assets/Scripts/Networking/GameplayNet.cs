@@ -7,7 +7,7 @@ public struct PlayerState
 {
     public string id;
     public string name;
-    public float x, y, rotation;
+    public float x, y, rotation, scale;
     public bool dead;
 }
 
@@ -98,6 +98,7 @@ public class GameplayNet : MonoBehaviour
         if (localDead && !immediate) return; // muerto: solo se envi?el STATE de muerte
         Vector2 p = localAvatar.position;
         float r = localAvatar.rotation.eulerAngles.z;
+        float s = localAvatar.localScale.x;
 
         var ps = new PlayerState
         {
@@ -106,6 +107,7 @@ public class GameplayNet : MonoBehaviour
             x = p.x,
             y = p.y,
             rotation = r,
+            scale = s,
             dead = localDead
         };
         last[ps.id] = ps;
@@ -140,6 +142,7 @@ public class GameplayNet : MonoBehaviour
             {
                 t.position = new Vector3(ps.x, ps.y, 0f);
                 t.rotation = Quaternion.Euler(0f, 0f, ps.rotation);
+                t.localScale = new Vector3(ps.scale, ps.scale, ps.scale);
             }
 
             if (SessionConfig.IsHost) TryEndMatch();

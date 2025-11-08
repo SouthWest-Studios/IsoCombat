@@ -426,6 +426,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2374823355134065875}
   - component: {fileID: 7503675036154785819}
+  - component: {fileID: 6170691144422582515}
   - component: {fileID: 2564564975571245392}
   m_Layer: 0
   m_Name: Player
@@ -462,9 +463,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e6d0e79380f3b1a439be1d29f546b697, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  stats: {fileID: 6170691144422582515}
   currentHealth: 2.98
-  maxHealth: 10
-  speed: 2
   playerSprite: {fileID: 4808230651459931177}
   playerGraphics: {fileID: 4808230651459931177}
   isPlayerLocal: 0
@@ -473,6 +473,19 @@ MonoBehaviour:
   invulnerabilityTimer: 0
   invulnerabilityCoolDownTimer: 0
   invulnerabilityCoolDown: 2
+--- !u!114 &6170691144422582515
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7591603133035999463}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1b0b1f03e3b3e3f44b49fd25037c960d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  baseStats: {fileID: 11400000, guid: fe076aecc125fe742b9f99c5c500868b, type: 2}
 --- !u!50 &2564564975571245392
 Rigidbody2D:
   serializedVersion: 5

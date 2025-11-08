@@ -1,3 +1,4 @@
+using Unity.VisualScripting.Antlr3.Runtime.Misc;
 using UnityEngine;
 
 public class HealthBarScript : MonoBehaviour
@@ -16,7 +17,7 @@ public class HealthBarScript : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        float fillPercent = player.currentHealth / player.maxHealth;
+        float fillPercent = player.currentHealth / player.stats.Get(StatId.MaxHP);
         fillPercent = Mathf.Clamp01(fillPercent);
 
         // Escala solo en X (o el eje que uses)

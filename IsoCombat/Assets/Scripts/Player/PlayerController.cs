@@ -11,11 +11,12 @@ using static UnityEngine.Rendering.DebugUI;
 public class PlayerController : MonoBehaviour
 {
 
-   
+    public StatsRuntime stats;
+
     [Header("Health References")]
     public float currentHealth = 0f;
-    public float maxHealth = 10f;
-    public float speed = 2;
+    //public float maxHealth = 10f;
+    //public float speed = 2;
 
     [Header("Player References")]
     public Transform playerSprite;
@@ -39,6 +40,7 @@ public class PlayerController : MonoBehaviour
     [HideInInspector] public float invulnerabilityCoolDown = 2f;
 
     //Physics
+
     PolygonCollider2D upperBody;
     BoxCollider2D lowerBody;
 
@@ -49,8 +51,8 @@ public class PlayerController : MonoBehaviour
         mainCamera = Camera.main;
         targetPosition = transform.position;
         timeCounter = 0;
-        currentHealth = maxHealth;
-        playerSprite.GetComponent<SpriteRenderer>().material.SetFloat("_FillAmount", currentHealth / maxHealth);
+        currentHealth = stats.Get(StatId.MaxHP);
+        playerSprite.GetComponent<SpriteRenderer>().material.SetFloat("_FillAmount", currentHealth / stats.Get(StatId.MaxHP));
     }
 
     // Update is called once per frame
@@ -87,7 +89,7 @@ public class PlayerController : MonoBehaviour
         if (dir.sqrMagnitude > 0.0001f)
             transform.up = dir;                            
 
-        Vector2 newPosition = Vector2.MoveTowards(currentPosition, mouseWorldPos, speed * Time.deltaTime);
+        Vector2 newPosition = Vector2.MoveTowards(currentPosition, mouseWorldPos, stats.Get(StatId.MoveSpeed) * Time.deltaTime);
 
         float camHeight = mainCamera.orthographicSize;
         float camWidth = camHeight * mainCamera.aspect;

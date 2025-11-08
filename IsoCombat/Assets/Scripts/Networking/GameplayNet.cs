@@ -52,6 +52,10 @@ public class GameplayNet : MonoBehaviour
             pcLocal.isPlayerLocal = true;
             AddToWinnerList(SessionConfig.ClientId + "_" + SessionConfig.PlayerName);
 
+            var srt = localAvatar.GetComponent<StatsRuntime>();
+            var mods = UpgradesState.I.GetFor(SessionConfig.ClientId);
+            srt.SetModifiers(mods);
+
             last[SessionConfig.ClientId] = new PlayerState
             {
                 id = SessionConfig.ClientId,

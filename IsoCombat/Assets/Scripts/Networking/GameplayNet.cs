@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 [Serializable]
 public struct PlayerState
@@ -152,14 +153,14 @@ public class GameplayNet : MonoBehaviour
         if(m.op == NetOperation.BACK_TO_LOBBY)
         {
             net.Stop();
-            UnityEngine.SceneManagement.SceneManager.LoadScene("EndGame");
+            CircleTransition.instance.CloseBlackScreen("EndGame");
             return;
         }
 
         if(m.op == NetOperation.FINISH_MATCH)
         {
             net.Stop();
-            UnityEngine.SceneManagement.SceneManager.LoadScene("MidRound");
+            CircleTransition.instance.CloseBlackScreen("MidRound");
             return;
         }
 
@@ -184,12 +185,12 @@ public class GameplayNet : MonoBehaviour
             {
                 net.SendMessage(NetOperation.BACK_TO_LOBBY, "");
                 net.Stop();
-                UnityEngine.SceneManagement.SceneManager.LoadScene("EndGame"); // host
+                CircleTransition.instance.CloseBlackScreen("EndGame");
             }
             else {
                 net.SendMessage(NetOperation.FINISH_MATCH, "");
                 net.Stop();
-                UnityEngine.SceneManagement.SceneManager.LoadScene("MidRound");
+                CircleTransition.instance.CloseBlackScreen("MidRound");
             }
             
         }

@@ -151,7 +151,8 @@ public class GameplayNet : MonoBehaviour
 
         if(m.op == NetOperation.BACK_TO_LOBBY)
         {
-            UnityEngine.SceneManagement.SceneManager.LoadScene("Lobby");
+            net.Stop();
+            UnityEngine.SceneManagement.SceneManager.LoadScene("EndGame");
             return;
         }
 
@@ -182,7 +183,8 @@ public class GameplayNet : MonoBehaviour
             if (NetRuntime.winners[winner] >= 3)
             {
                 net.SendMessage(NetOperation.BACK_TO_LOBBY, "");
-                UnityEngine.SceneManagement.SceneManager.LoadScene("Lobby"); // host
+                net.Stop();
+                UnityEngine.SceneManagement.SceneManager.LoadScene("EndGame"); // host
             }
             else {
                 net.SendMessage(NetOperation.FINISH_MATCH, "");

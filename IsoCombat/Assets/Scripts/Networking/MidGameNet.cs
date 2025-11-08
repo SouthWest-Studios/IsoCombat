@@ -60,8 +60,7 @@ public class MidGameNet : MonoBehaviour
     {
         var ordened = new List<KeyValuePair<string, int>>(wins);
         ordened.Sort((a, b) => {
-            int c = b.Value.CompareTo(a.Value);
-            return c != 0 ? c : string.Compare(a.Key, b.Key, StringComparison.Ordinal);
+            return string.Compare(a.Key, b.Key, StringComparison.Ordinal);
         });
         int count = Mathf.Min(ordened.Count, rankUI.Length);
         for (int i = 0; i < count; i++)
@@ -69,7 +68,7 @@ public class MidGameNet : MonoBehaviour
             var e = ordened[i];
             var parts = e.Key.Split('_');
             string display = parts.Length > 1 ? parts[1] : e.Key;
-            rankUI[i].text.text = $"{i + 1}. {display}";
+            rankUI[i].text.text = $"{display}";
             rankUI[i].rank_bar.fillAmount = Mathf.Clamp01(e.Value / 3f);
         }
         for (int i = count; i < rankUI.Length; i++) { rankUI[i].text.text = ""; rankUI[i].rank_bar.fillAmount = 0f; }

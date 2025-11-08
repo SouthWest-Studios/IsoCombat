@@ -17,6 +17,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/MidRound.unity
     guid: b0a9ab848959e7e4da8574c0118f9630
+  - enabled: 1
+    path: Assets/Scenes/EndGame.unity
+    guid: 6ff7ef63d250e8742a8a23a0b7a15ed6
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0

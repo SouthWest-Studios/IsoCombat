@@ -9,6 +9,8 @@ public class EndGameNet : MonoBehaviour
     public PlayerRankUI[] rankUI;
     INetwork net;
 
+    public GameObject btnBackToLobby;
+
     readonly HashSet<string> ready = new();
 
     void Start()
@@ -25,11 +27,13 @@ public class EndGameNet : MonoBehaviour
 
         if (SessionConfig.IsHost)
         {
+            btnBackToLobby.SetActive(true);
             ready.Add(SessionConfig.ClientId);   
             BroadcastRank();                     
         }
         else
         {
+            btnBackToLobby.SetActive(false);
             net.SendMessage(NetOperation.MG_READY, SessionConfig.ClientId);
         }
     }

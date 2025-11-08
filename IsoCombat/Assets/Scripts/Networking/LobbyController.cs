@@ -31,8 +31,8 @@ public class LobbyController : MonoBehaviour
 
     public void OnClickPlay()
     {
-
         _net.SendMessage(NetOperation.SYSTEM, "__PLAY__");
+        UpgradesState.I.ClearAll();
         NetRuntime.ResetWinners();
         UnityEngine.SceneManagement.SceneManager.LoadScene("Gameplay");
 
@@ -45,6 +45,7 @@ public class LobbyController : MonoBehaviour
     {
         if (msg.Contains("__PLAY__"))
         {
+            UpgradesState.I.ClearAll();
             UnityEngine.SceneManagement.SceneManager.LoadScene("Gameplay");
         }
     }

@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Linq;
+using System.Collections.Generic;
 
 public class MidGameUI : MonoBehaviour
 {
@@ -22,8 +23,10 @@ public class MidGameUI : MonoBehaviour
 
     void Pick(Upgrade u)
     {
-        // guarda la mejora para este jugador
-        UpgradesState.I.AddUpgrade(SessionConfig.ClientId, u); // acumula mods para siguientes rondas
-        // opcional: feedback UI aquí
+        var list = new List<StatModEntry>();
+        foreach (var m in u.modifiers) list.AddRange(m.entries); // StatModEntry ya lo tienes en Stats.cs
+        var p = new UpgradePick { playerId = SessionConfig.ClientId, mods = list.ToArray() };
+        MidGameNet.I.SendUpgradePicked(p);
+        foreach (var b in choices) b.interactable = false; // evita doble pick
     }
 }

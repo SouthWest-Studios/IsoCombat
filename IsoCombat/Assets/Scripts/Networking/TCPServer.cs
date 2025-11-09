@@ -2,9 +2,20 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
+using System.Linq;
+
+[Serializable]
+public enum PlayerConnectionType
+{
+    Player,
+    Spectator
+}
 
 public class TCPServer : INetwork
 {
+    public const int MAX_PLAYERS = 3;
+    private readonly Dictionary<Socket, PlayerConnectionType> _connectionTypes = new();
+    
     public bool IsServer => true;
     public bool IsRunning { get; private set; }
     public string LocalName { get; set; }
@@ -41,13 +52,32 @@ public class TCPServer : INetwork
         {
             try
             {
+                if (_clients.Count >= MAX_PLAYERS)
+                {
+                    var tempSocket = _listen.Accept();
+                    tempSocket.Close();
+                    return;
+                }
+
                 var s = _listen.Accept();
                 s.Blocking = false;
                 _clients.Add(s);
                 _rx[s] = new List<byte>(8192);
 
-                SendRaw(s, new NetMsg { op = NetOperation.SYSTEM, payload = $"WELCOME {LocalName}" });
-                OnSystemMessage?.Invoke($"Client {s.RemoteEndPoint} connected. total={_clients.Count}");
+                var playerCount = _connectionTypes.Values.Count(x => x == PlayerConnectionType.Player);
+                var connectionType = playerCount < MAX_PLAYERS ? 
+                    PlayerConnectionType.Player : 
+                    PlayerConnectionType.Spectator;
+                
+                _connectionTypes[s] = connectionType;
+
+                string welcomeMsg = $"WELCOME {LocalName}";
+                
+                SendRaw(s, new NetMsg { op = NetOperation.SYSTEM, payload = welcomeMsg });
+                OnSystemMessage?.Invoke(
+                    $"Client {s.RemoteEndPoint} connected as {connectionType}. " +
+                    $"Players: {_connectionTypes.Count(x => x.Value == PlayerConnectionType.Player)}/{MAX_PLAYERS}"
+                );
             }
             catch (Exception e) { OnLog?.Invoke(e.Message); }
         }
@@ -117,6 +147,7 @@ public class TCPServer : INetwork
         try { c?.Close(); } catch { }
         _clients.RemoveAt(idx);
         _rx.Remove(c);
+        _connectionTypes.Remove(c);
     }
 
     public void Stop()

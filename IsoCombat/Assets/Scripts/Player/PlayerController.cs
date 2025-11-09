@@ -31,6 +31,13 @@ public class PlayerController : MonoBehaviour
     private Vector2 targetPosition;
     private float screenMargin = 0.5f;
 
+    //Dash
+    public float dashMultiplier = 2f;
+    public float dashDuration = 2f;
+    public float dashCooldown = 1f;
+    private bool isDashing = false;
+    private bool canDash = true;
+
     //Timer
     private float timeCounter = 0;
 
@@ -60,6 +67,11 @@ public class PlayerController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (isPlayerLocal && !isDead)
+        {
+            if (Input.GetMouseButton(0) && canDash && !isDashing)
+                StartCoroutine(Dash());
+        }
 
         UpdateTime();
 
@@ -78,6 +90,43 @@ public class PlayerController : MonoBehaviour
 
     }
 
+    IEnumerator Dash()
+    {
+        canDash = false;
+        isDashing = true;
+
+        float dashTimer = 0f;
+
+        while (Input.GetMouseButton(0) && dashTimer < dashDuration)
+        {
+            dashTimer += Time.deltaTime;
+
+            Vector2 currentPosition = transform.position;
+            Vector3 mouseWorldPos3 = mainCamera.ScreenToWorldPoint(Input.mousePosition);
+            mouseWorldPos3.z = transform.position.z;
+            Vector2 mouseWorldPos = mouseWorldPos3;
+
+            Vector2 dir = mouseWorldPos - currentPosition;
+            if (dir.sqrMagnitude > 0.0001f)
+                transform.up = dir;
+
+            Vector2 newPosition = Vector2.MoveTowards(currentPosition, mouseWorldPos, stats.Get(StatId.MoveSpeed) * dashMultiplier * Time.deltaTime);
+            transform.position = newPosition;
+
+            yield return null;
+        }
+
+        isDashing = false;
+
+        yield return new WaitForSeconds(dashCooldown);
+        canDash = true;
+    }
+
+    public void AssignColor(Color c)
+    {
+        var sr = playerSprite.GetComponent<SpriteRenderer>();
+        if (sr) sr.color = c;
+    }
 
     void UpdateMovement()
     {

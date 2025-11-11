@@ -26,10 +26,40 @@ public struct AllPlayerColorsMsg
     public List<PlayerColorMsg> players;
 }
 
+[Serializable]
+public struct SpawnAssignment
+{
+    public string playerId;
+    public int spawnIndex;
+}
+
 public class GameplayNet : MonoBehaviour
 {
     public GameObject playerPrefab;
     public bool localDead = false;
+
+    [SerializeField] private Transform spawn0;
+    [SerializeField] private Transform spawn1;
+    [SerializeField] private Transform spawn2;
+    [SerializeField] private Transform spawn3;
+
+    public Transform GetSpawn(int index)
+    {
+        switch (index)
+        {
+            case 0: return spawn0;
+            case 1: return spawn1;
+            case 2: return spawn2;
+            case 3: return spawn3;
+            default: return null;
+        }
+    }
+
+    public void SetPlayerAtSpawn(GameObject player, int index)
+    {
+        var t = GetSpawn(index);
+        player.transform.SetPositionAndRotation(t.position, t.rotation);
+    }
 
     INetwork net;
     readonly Dictionary<string, Transform> avatars = new();
@@ -65,24 +95,45 @@ public class GameplayNet : MonoBehaviour
         NetRuntime.Attach(net);
         net.OnMessage += OnMsg;
 
-        if (SessionConfig.IsSpectator) localAvatar = null; 
-        else
+        if (!SessionConfig.IsSpectator)
         {
             localAvatar = Instantiate(playerPrefab).transform;
             localAvatar.name = $"LOCAL_{SessionConfig.PlayerName}_{SessionConfig.ClientId}";
-        }
-        pcLocal = localAvatar.GetComponent<PlayerController>();
-        pcLocal.isPlayerLocal = true;
 
-        // Asignar color local
-        Color colorAsignado = GetColorJugador(SessionConfig.ClientId);
-        pcLocal.AssignColor(colorAsignado);
+            int spawnIndex = Mathf.Abs(SessionConfig.ClientId.GetHashCode()) % 4;
+            SetPlayerAtSpawn(localAvatar.gameObject, spawnIndex);
+        }
+        else
+        {
+            localAvatar = null;
+            UnityEngine.Debug.Log("[GameplayNet] Espectador: no se instancia avatar local.");
+        }
+
+        if (localAvatar != null)
+        {
+            pcLocal = localAvatar.GetComponent<PlayerController>();
+            pcLocal.isPlayerLocal = true;
+
+            // Asignar color local
+            Color colorAsignado = GetColorJugador(SessionConfig.ClientId);
+            pcLocal.AssignColor(colorAsignado);
+        }
 
         // Solo el host decide y comunica los colores
         if (SessionConfig.IsHost)
         {
-            coloresAsignados[SessionConfig.ClientId] = colorAsignado;
+            // Asegura que el host tenga color asignado, aunque no exista avatar local
+            if (!coloresAsignados.TryGetValue(SessionConfig.ClientId, out var myColor))
+            {
+                myColor = GetColorJugador(SessionConfig.ClientId);
+                coloresAsignados[SessionConfig.ClientId] = myColor;
+            }
 
+            // Si hay avatar local, aplícale su color
+            if (pcLocal != null)
+                pcLocal.AssignColor(myColor);
+
+            // Construye y envía la tabla completa de colores
             var allColors = new AllPlayerColorsMsg { players = new List<PlayerColorMsg>() };
             foreach (var kv in coloresAsignados)
             {
@@ -95,35 +146,38 @@ public class GameplayNet : MonoBehaviour
 
             net.SendMessage(NetOperation.PLAYER_COLOR, JsonUtility.ToJson(allColors));
 
+            // Reaplica colores a avatares que ya estén en escena
             foreach (var kv in coloresAsignados)
             {
-                // Su propio jugador
                 if (kv.Key == SessionConfig.ClientId)
                 {
-                    pcLocal.AssignColor(kv.Value);
+                    if (pcLocal != null) pcLocal.AssignColor(kv.Value);
                     continue;
                 }
-
-                // Los jugadores que ya est�n en escena
                 if (avatars.TryGetValue(kv.Key, out var t) && t != null)
-                {
                     t.GetComponent<PlayerController>().AssignColor(kv.Value);
-                }
             }
         }
 
+
         AddToWinnerList(SessionConfig.ClientId + "_" + SessionConfig.PlayerName);
 
-        var srt = localAvatar.GetComponent<StatsRuntime>();
-        var mods = UpgradesState.I.GetFor(SessionConfig.ClientId);
-        srt.SetModifiers(mods);
-
-        last[SessionConfig.ClientId] = new PlayerState
+        if (localAvatar != null)
         {
-            id = SessionConfig.ClientId,
-            name = SessionConfig.PlayerName,
-            dead = false
-        };
+            var srt = localAvatar.GetComponent<StatsRuntime>();
+            var mods = UpgradesState.I.GetFor(SessionConfig.ClientId);
+            srt.SetModifiers(mods);
+        }
+
+        if (!SessionConfig.IsSpectator)
+        {
+            last[SessionConfig.ClientId] = new PlayerState
+            {
+                id = SessionConfig.ClientId,
+                name = SessionConfig.PlayerName,
+                dead = false
+            };
+        }
     }
 
     void OnDestroy()
@@ -131,25 +185,28 @@ public class GameplayNet : MonoBehaviour
         if (net != null) net.OnMessage -= OnMsg;
     }
 
+
     void Update()
     {
         net?.Tick();
         if (matchEnded) return;
-        if (localAvatar == null) return;
 
-        if (!localDead && pcLocal.isDead)
+        if (localAvatar != null)
         {
-            localDead = true;
-            SendState(true);
-            pcLocal.enabled = false;
-            if (SessionConfig.IsHost) TryEndMatch();
-        }
+            if (!localDead && pcLocal.isDead)
+            {
+                localDead = true;
+                SendState(true);
+                pcLocal.enabled = false;
+                if (SessionConfig.IsHost) TryEndMatch();
+            }
 
-        sendTimer += Time.deltaTime;
-        if (sendTimer >= 0.01f)
-        {
-            sendTimer = 0f;
-            SendState();
+            sendTimer += Time.deltaTime;
+            if (sendTimer >= 0.01f)
+            {
+                sendTimer = 0f;
+                SendState();
+            }
         }
     }
 
@@ -250,7 +307,7 @@ public class GameplayNet : MonoBehaviour
                         coloresAsignados[p.playerId] = c;
                         if (avatars.TryGetValue(p.playerId, out var t) && t != null)
                             t.GetComponent<PlayerController>().AssignColor(c);
-                        else if (p.playerId == SessionConfig.ClientId)
+                        else if (p.playerId == SessionConfig.ClientId && pcLocal != null)
                             pcLocal.AssignColor(c);
                     }
                 }
@@ -263,7 +320,7 @@ public class GameplayNet : MonoBehaviour
                     coloresAsignados[msg.playerId] = c;
                     if (avatars.TryGetValue(msg.playerId, out var t) && t != null)
                         t.GetComponent<PlayerController>().AssignColor(c);
-                    else if (msg.playerId == SessionConfig.ClientId)
+                    else if (msg.playerId == SessionConfig.ClientId && pcLocal != null)
                         pcLocal.AssignColor(c);
                 }
             }

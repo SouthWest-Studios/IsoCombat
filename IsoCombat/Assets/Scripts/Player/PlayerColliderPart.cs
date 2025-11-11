@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 public class PlayerColliderPart : MonoBehaviour
 {
@@ -6,6 +7,7 @@ public class PlayerColliderPart : MonoBehaviour
     public PartType partType;
     [HideInInspector] public PlayerController owner;
     public float bounceForce = 5f;
+    float crashCooldown = 1f;
 
     void Start()
     {
@@ -36,8 +38,18 @@ public class PlayerColliderPart : MonoBehaviour
             // Aplicar fuerza opuesta a cada uno
             rbOwner.AddForce(-normal * bounceForce, ForceMode2D.Impulse);
             rbOther.AddForce(normal * bounceForce, ForceMode2D.Impulse);
+
+            StartCoroutine(StopBounceAfterDelay(rbOwner));
+            StartCoroutine(StopBounceAfterDelay(rbOther));
         }
 
 
+    }
+    IEnumerator StopBounceAfterDelay(Rigidbody2D rb)
+    {
+        yield return new WaitForSeconds(crashCooldown);
+
+        // Detiene el movimiento (el rebote)
+        rb.linearVelocity = Vector2.zero;
     }
 }

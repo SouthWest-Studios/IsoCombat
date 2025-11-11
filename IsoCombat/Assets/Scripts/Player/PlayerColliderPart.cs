@@ -8,7 +8,7 @@ public class PlayerColliderPart : MonoBehaviour
     public PartType partType;
     [HideInInspector] public PlayerController owner;
     public float bounceForce = 5f;
-    float crashCooldown = 0.1f;
+    float crashCooldown = 0.3f;
 
     void Start()
     {

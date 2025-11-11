@@ -16,13 +16,21 @@ public class PlayerColliderPart : MonoBehaviour
 
     void OnCollisionEnter2D(Collision2D collision)
     {
+
         var otherPart = collision.collider.GetComponent<PlayerColliderPart>();
         if (otherPart == null) return;
+
+        if (!owner.isPlayerLocal) return;
+
+
+        
 
         if (otherPart.owner == owner) return;
 
         Rigidbody2D rbOwner = owner.GetComponent<Rigidbody2D>();
         Rigidbody2D rbOther = otherPart.owner.GetComponent<Rigidbody2D>();
+
+        rbOwner.constraints = RigidbodyConstraints2D.None;
 
         if (partType == PartType.Lower && otherPart.partType == PartType.Upper)
         {
@@ -46,10 +54,13 @@ public class PlayerColliderPart : MonoBehaviour
 
     }
     IEnumerator StopBounceAfterDelay(Rigidbody2D rb)
-    {
+    {   
         yield return new WaitForSeconds(crashCooldown);
 
         // Detiene el movimiento (el rebote)
-        rb.linearVelocity = Vector2.zero;
+     rb.linearVelocity = Vector2.zero;
+
+        rb.constraints = RigidbodyConstraints2D.FreezePosition
+            | RigidbodyConstraints2D.FreezeRotation;
     }
 }

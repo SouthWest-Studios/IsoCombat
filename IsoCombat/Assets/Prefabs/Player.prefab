@@ -134,6 +134,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   partType: 1
   owner: {fileID: 0}
+  bounceForce: 5
 --- !u!61 &8709720714559445690
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -227,6 +228,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   partType: 0
   owner: {fileID: 0}
+  bounceForce: 5
 --- !u!60 &6370452440087965787
 PolygonCollider2D:
   m_ObjectHideFlags: 0
@@ -470,9 +472,13 @@ MonoBehaviour:
   isPlayerLocal: 0
   isDead: 0
   mainCamera: {fileID: 0}
+  dashMultiplier: 2
+  dashDuration: 2
+  dashCooldown: 1
   invulnerabilityTimer: 0
   invulnerabilityCoolDownTimer: 0
   invulnerabilityCoolDown: 2
+  haveDamage: 0
 --- !u!114 &6170691144422582515
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -512,7 +518,7 @@ Rigidbody2D:
   m_Interpolate: 0
   m_SleepingMode: 1
   m_CollisionDetection: 0
-  m_Constraints: 0
+  m_Constraints: 4
 --- !u!1 &7763033192561487834
 GameObject:
   m_ObjectHideFlags: 0

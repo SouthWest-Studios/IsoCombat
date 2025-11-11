@@ -1,5 +1,6 @@
-using UnityEngine;
 using System.Collections;
+using Unity.VisualScripting;
+using UnityEngine;
 
 public class PlayerColliderPart : MonoBehaviour
 {
@@ -7,7 +8,7 @@ public class PlayerColliderPart : MonoBehaviour
     public PartType partType;
     [HideInInspector] public PlayerController owner;
     public float bounceForce = 5f;
-    float crashCooldown = 1f;
+    float crashCooldown = 0.1f;
 
     void Start()
     {
@@ -56,13 +57,17 @@ public class PlayerColliderPart : MonoBehaviour
 
     }
     IEnumerator StopBounceAfterDelay(Rigidbody2D rb)
-    {   
+    {
+       
+        owner.canMove = false;
         yield return new WaitForSeconds(crashCooldown);
-
-        // Detiene el movimiento (el rebote)
-     rb.linearVelocity = Vector2.zero;
-
         rb.constraints = RigidbodyConstraints2D.FreezePosition
-            | RigidbodyConstraints2D.FreezeRotation;
+           | RigidbodyConstraints2D.FreezeRotation;
+
+        owner.canMove = true;
+        // Detiene el movimiento (el rebote)
+        rb.linearVelocity = Vector2.zero;
+
+        
     }
 }

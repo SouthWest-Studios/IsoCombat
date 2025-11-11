@@ -24,7 +24,7 @@ public class PlayerController : MonoBehaviour
 
     public bool isPlayerLocal = false;
     public bool isDead = false;
-
+    public bool canMove = true;
     
     //Movement
     public Camera mainCamera;
@@ -84,7 +84,11 @@ public class PlayerController : MonoBehaviour
                 PlayerDie();
             }
 
-            UpdateMovement();
+            if (canMove)
+            {
+                UpdateMovement();
+            }
+            
 
             if (Input.GetKeyDown(KeyCode.K))
             {

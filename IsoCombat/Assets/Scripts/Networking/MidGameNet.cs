@@ -47,7 +47,7 @@ public class MidGameNet : MonoBehaviour
         }
         else
         {
-            net.SendMessage(NetOperation.MG_READY, SessionConfig.ClientId);
+            if (!SessionConfig.IsSpectator) net.SendMessage(NetOperation.MG_READY, SessionConfig.ClientId);
         }
     }
 
@@ -76,6 +76,8 @@ public class MidGameNet : MonoBehaviour
 
     public void SendUpgradePicked(UpgradePick p)
     {
+        if (SessionConfig.IsSpectator) return;
+        
         string json = JsonUtility.ToJson(p);
         net.SendMessage(NetOperation.UPGRADE_PICKED, json);
         if (SessionConfig.IsHost)

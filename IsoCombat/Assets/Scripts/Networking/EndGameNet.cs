@@ -34,7 +34,7 @@ public class EndGameNet : MonoBehaviour
         else
         {
             btnBackToLobby.SetActive(false);
-            net.SendMessage(NetOperation.MG_READY, SessionConfig.ClientId);
+            if (!SessionConfig.IsSpectator) net.SendMessage(NetOperation.MG_READY, SessionConfig.ClientId);
         }
     }
 

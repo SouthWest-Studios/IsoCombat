@@ -15,6 +15,11 @@ public class MidGameUI : MonoBehaviour
 
     void Start()
     {
+        if (SessionConfig.IsSpectator)
+        {
+            foreach (var b in choices) if (b) b.interactable = false;
+            return;
+        }
         offered = DrawThree(pool, new int[] { w1, w2, w3, w4, w5 });
 
         for (int i = 0; i < choices.Length; i++)
@@ -34,6 +39,8 @@ public class MidGameUI : MonoBehaviour
 
     void Pick(Upgrade u)
     {
+        if (SessionConfig.IsSpectator) return;
+        
         var p = new UpgradePick
         {
             playerId = SessionConfig.ClientId,

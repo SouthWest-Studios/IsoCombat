@@ -52,13 +52,6 @@ public class TCPServer : INetwork
         {
             try
             {
-                if (_clients.Count >= MAX_PLAYERS)
-                {
-                    var tempSocket = _listen.Accept();
-                    tempSocket.Close();
-                    return;
-                }
-
                 var s = _listen.Accept();
                 s.Blocking = false;
                 _clients.Add(s);
@@ -69,7 +62,10 @@ public class TCPServer : INetwork
                     PlayerConnectionType.Player : 
                     PlayerConnectionType.Spectator;
                 
-                _connectionTypes[s] = connectionType;
+                _connectionTypes[s] = connectionType;  
+
+                string role = connectionType == PlayerConnectionType.Spectator ? "SPECTATOR" : "PLAYER";
+                SendRaw(s, new NetMsg { op = NetOperation.HELLO, payload = role });
 
                 string welcomeMsg = $"WELCOME {LocalName}";
                 
@@ -109,6 +105,11 @@ public class TCPServer : INetwork
 
     void Route(Socket from, NetMsg msg)
     {
+        if (_connectionTypes.TryGetValue(from, out var t) && t == PlayerConnectionType.Spectator && (msg.op == NetOperation.MG_READY || msg.op == NetOperation.UPGRADE_PICKED))
+        {
+            return; // lo ignoramos en silencio
+        }
+
         Broadcast(msg);
 
         switch (msg.op)

@@ -23,6 +23,9 @@ public class TCPClient : INetwork
     public void StartClient(string serverIp, string clientName)
     {
         LocalName = clientName;
+
+        SessionConfig.IsSpectator = false;
+
         _sock = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
         _sock.Connect(IPAddress.Parse(serverIp), Port);
         _sock.Blocking = false;
@@ -56,6 +59,10 @@ public class TCPClient : INetwork
                             break;
                         case NetOperation.SYSTEM:
                             OnSystemMessage?.Invoke("Server: " + msg.payload);
+                            break;
+                        case NetOperation.HELLO:
+                            SessionConfig.IsSpectator = string.Equals(msg.payload, "SPECTATOR", StringComparison.OrdinalIgnoreCase);
+                            OnSystemMessage?.Invoke(SessionConfig.IsSpectator ? "Role: Spectator" : "Role: Player");
                             break;
                     }
                     OnMessage?.Invoke(msg);

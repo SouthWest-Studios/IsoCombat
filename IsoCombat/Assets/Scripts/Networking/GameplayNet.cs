@@ -65,8 +65,12 @@ public class GameplayNet : MonoBehaviour
         NetRuntime.Attach(net);
         net.OnMessage += OnMsg;
 
-        localAvatar = Instantiate(playerPrefab).transform;
-        localAvatar.name = $"LOCAL_{SessionConfig.PlayerName}_{SessionConfig.ClientId}";
+        if (SessionConfig.IsSpectator) localAvatar = null; 
+        else
+        {
+            localAvatar = Instantiate(playerPrefab).transform;
+            localAvatar.name = $"LOCAL_{SessionConfig.PlayerName}_{SessionConfig.ClientId}";
+        }
         pcLocal = localAvatar.GetComponent<PlayerController>();
         pcLocal.isPlayerLocal = true;
 
@@ -100,7 +104,7 @@ public class GameplayNet : MonoBehaviour
                     continue;
                 }
 
-                // Los jugadores que ya estén en escena
+                // Los jugadores que ya estï¿½n en escena
                 if (avatars.TryGetValue(kv.Key, out var t) && t != null)
                 {
                     t.GetComponent<PlayerController>().AssignColor(kv.Value);
@@ -192,7 +196,7 @@ public class GameplayNet : MonoBehaviour
                 if (coloresAsignados.TryGetValue(ps.id, out var c))
                     t.GetComponent<PlayerController>().AssignColor(c);
                 else
-                    Debug.LogWarning($"Color del jugador {ps.id} aún no recibido del servidor");
+                    Debug.LogWarning($"Color del jugador {ps.id} aï¿½n no recibido del servidor");
 
                 AddToWinnerList(ps.id + "_" + ps.name);
 

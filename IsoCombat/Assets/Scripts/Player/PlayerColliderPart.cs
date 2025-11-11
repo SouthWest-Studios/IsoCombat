@@ -46,8 +46,8 @@ public class PlayerColliderPart : MonoBehaviour
             dir.Normalize();
 
             // Aplicar fuerza opuesta a cada uno
-            rbOwner.AddForce(-dir * bounceForce, ForceMode2D.Impulse);
-            rbOther.AddForce(dir * bounceForce, ForceMode2D.Impulse);
+            rbOwner.AddForce(dir * bounceForce, ForceMode2D.Impulse);
+            rbOther.AddForce(-dir * bounceForce, ForceMode2D.Impulse);
 
             StartCoroutine(StopBounceAfterDelay(rbOwner));
             StartCoroutine(StopBounceAfterDelay(rbOther));

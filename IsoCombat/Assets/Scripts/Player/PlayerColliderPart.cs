@@ -41,11 +41,13 @@ public class PlayerColliderPart : MonoBehaviour
         if (rbOwner != null && rbOther != null)
         {
             // Dirección normal del impacto
-            Vector2 normal = collision.contacts[0].normal;
+
+            Vector2 dir = rbOwner.transform.position - rbOther.transform.position;
+            dir.Normalize();
 
             // Aplicar fuerza opuesta a cada uno
-            rbOwner.AddForce(-normal * bounceForce, ForceMode2D.Impulse);
-            rbOther.AddForce(normal * bounceForce, ForceMode2D.Impulse);
+            rbOwner.AddForce(-dir * bounceForce, ForceMode2D.Impulse);
+            rbOther.AddForce(dir * bounceForce, ForceMode2D.Impulse);
 
             StartCoroutine(StopBounceAfterDelay(rbOwner));
             StartCoroutine(StopBounceAfterDelay(rbOther));

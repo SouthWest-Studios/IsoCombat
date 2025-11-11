@@ -9,9 +9,8 @@ public struct PlayerState
     public string id;
     public string name;
     public float x, y, rotation, scale;
-    public float damaged; 
+    public float damaged;
     public bool dead;
-    
 }
 
 [Serializable]
@@ -19,6 +18,12 @@ public struct PlayerColorMsg
 {
     public string playerId;
     public string color;
+}
+
+[Serializable]
+public struct AllPlayerColorsMsg
+{
+    public List<PlayerColorMsg> players;
 }
 
 public class GameplayNet : MonoBehaviour
@@ -53,6 +58,7 @@ public class GameplayNet : MonoBehaviour
     {
         net = SessionConfig.IsHost ? (INetwork)new UDPServer() : new UDPClient();
         net.Port = SessionConfig.Port;
+
         if (SessionConfig.IsHost) ((UDPServer)net).StartServer(SessionConfig.PlayerName);
         else ((UDPClient)net).StartClient(SessionConfig.ServerIp, SessionConfig.PlayerName);
 
@@ -64,16 +70,42 @@ public class GameplayNet : MonoBehaviour
         pcLocal = localAvatar.GetComponent<PlayerController>();
         pcLocal.isPlayerLocal = true;
 
+        // Asignar color local
         Color colorAsignado = GetColorJugador(SessionConfig.ClientId);
         pcLocal.AssignColor(colorAsignado);
 
+        // Solo el host decide y comunica los colores
         if (SessionConfig.IsHost)
         {
-            net.SendMessage(NetOperation.PLAYER_COLOR, JsonUtility.ToJson(new PlayerColorMsg
+            coloresAsignados[SessionConfig.ClientId] = colorAsignado;
+
+            var allColors = new AllPlayerColorsMsg { players = new List<PlayerColorMsg>() };
+            foreach (var kv in coloresAsignados)
             {
-                playerId = SessionConfig.ClientId,
-                color = ColorUtility.ToHtmlStringRGB(colorAsignado)
-            }));
+                allColors.players.Add(new PlayerColorMsg
+                {
+                    playerId = kv.Key,
+                    color = ColorUtility.ToHtmlStringRGB(kv.Value)
+                });
+            }
+
+            net.SendMessage(NetOperation.PLAYER_COLOR, JsonUtility.ToJson(allColors));
+
+            foreach (var kv in coloresAsignados)
+            {
+                // Su propio jugador
+                if (kv.Key == SessionConfig.ClientId)
+                {
+                    pcLocal.AssignColor(kv.Value);
+                    continue;
+                }
+
+                // Los jugadores que ya estén en escena
+                if (avatars.TryGetValue(kv.Key, out var t) && t != null)
+                {
+                    t.GetComponent<PlayerController>().AssignColor(kv.Value);
+                }
+            }
         }
 
         AddToWinnerList(SessionConfig.ClientId + "_" + SessionConfig.PlayerName);
@@ -136,6 +168,7 @@ public class GameplayNet : MonoBehaviour
             damaged = localAvatar.GetComponent<PlayerController>().haveDamage,
             dead = localDead
         };
+
         last[ps.id] = ps;
         net.SendMessage(NetOperation.STATE, JsonUtility.ToJson(ps));
         localAvatar.GetComponent<PlayerController>().haveDamage = 0;
@@ -155,16 +188,39 @@ public class GameplayNet : MonoBehaviour
                 t.name = $"REMOTE_{ps.name}_{ps.id}";
                 avatars[ps.id] = t;
 
-                Color c = GetColorJugador(ps.id);
-                t.GetComponent<PlayerController>().AssignColor(c);
+                // Si ya tenemos el color asignado por el servidor, lo aplicamos
+                if (coloresAsignados.TryGetValue(ps.id, out var c))
+                    t.GetComponent<PlayerController>().AssignColor(c);
+                else
+                    Debug.LogWarning($"Color del jugador {ps.id} aún no recibido del servidor");
 
                 AddToWinnerList(ps.id + "_" + ps.name);
+
+                // Si somos el host, asignamos color y lo enviamos a todos
+                if (SessionConfig.IsHost)
+                {
+                    Color nuevoColor = GetColorJugador(ps.id);
+                    coloresAsignados[ps.id] = nuevoColor;
+
+                    var allColors = new AllPlayerColorsMsg { players = new List<PlayerColorMsg>() };
+                    foreach (var kv in coloresAsignados)
+                    {
+                        allColors.players.Add(new PlayerColorMsg
+                        {
+                            playerId = kv.Key,
+                            color = ColorUtility.ToHtmlStringRGB(kv.Value)
+                        });
+                    }
+                    net.SendMessage(NetOperation.PLAYER_COLOR, JsonUtility.ToJson(allColors));
+                }
             }
 
             if (ps.dead)
             {
-                SpriteRenderer r = t.GetComponentInChildren<SpriteRenderer>(); if (r) r.enabled = false;
-                PlayerController pc = t.GetComponent<PlayerController>(); if (pc) pc.enabled = false;
+                SpriteRenderer r = t.GetComponentInChildren<SpriteRenderer>();
+                if (r) r.enabled = false;
+                PlayerController pc = t.GetComponent<PlayerController>();
+                if (pc) pc.enabled = false;
             }
             else
             {
@@ -172,7 +228,6 @@ public class GameplayNet : MonoBehaviour
                 t.rotation = Quaternion.Euler(0f, 0f, ps.rotation);
                 t.localScale = new Vector3(ps.scale, ps.scale, ps.scale);
                 t.GetComponent<PlayerController>().SetHealth(ps.damaged);
-                // vuestro de qitar la vida de verdad t.GetComponent<PlayerController>(). con  ps.damaged;
             }
 
             if (SessionConfig.IsHost) TryEndMatch();
@@ -181,14 +236,32 @@ public class GameplayNet : MonoBehaviour
 
         if (m.op == NetOperation.PLAYER_COLOR)
         {
-            var msg = JsonUtility.FromJson<PlayerColorMsg>(m.payload);
-            Color c;
-            ColorUtility.TryParseHtmlString("#" + msg.color, out c);
-
-            coloresAsignados[msg.playerId] = c;
-            if (avatars.TryGetValue(msg.playerId, out var t) && t != null)
+            try
             {
-                t.GetComponent<PlayerController>().AssignColor(c);
+                var all = JsonUtility.FromJson<AllPlayerColorsMsg>(m.payload);
+                foreach (var p in all.players)
+                {
+                    if (ColorUtility.TryParseHtmlString("#" + p.color, out Color c))
+                    {
+                        coloresAsignados[p.playerId] = c;
+                        if (avatars.TryGetValue(p.playerId, out var t) && t != null)
+                            t.GetComponent<PlayerController>().AssignColor(c);
+                        else if (p.playerId == SessionConfig.ClientId)
+                            pcLocal.AssignColor(c);
+                    }
+                }
+            }
+            catch
+            {
+                var msg = JsonUtility.FromJson<PlayerColorMsg>(m.payload);
+                if (ColorUtility.TryParseHtmlString("#" + msg.color, out Color c))
+                {
+                    coloresAsignados[msg.playerId] = c;
+                    if (avatars.TryGetValue(msg.playerId, out var t) && t != null)
+                        t.GetComponent<PlayerController>().AssignColor(c);
+                    else if (msg.playerId == SessionConfig.ClientId)
+                        pcLocal.AssignColor(c);
+                }
             }
         }
 
@@ -210,11 +283,13 @@ public class GameplayNet : MonoBehaviour
     void TryEndMatch()
     {
         if (matchEnded) return;
-        int vivos = 0; string winner = "";
+        int vivos = 0;
+        string winner = "";
         foreach (var kv in last)
         {
             if (!kv.Value.dead) { vivos++; winner = kv.Key + "_" + kv.Value.name; }
         }
+
         if (vivos <= 1)
         {
             matchEnded = true;

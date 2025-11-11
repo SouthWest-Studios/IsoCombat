@@ -18,10 +18,12 @@ public class PlayerColliderPart : MonoBehaviour
 
         if (otherPart.owner == owner) return;
 
-        if (partType == PartType.Upper && otherPart.partType == PartType.Lower)
+        if (partType == PartType.Lower && otherPart.partType == PartType.Upper)
         {
             Debug.Log($"{owner.name} golpeó a {otherPart.owner.name}");
-            otherPart.owner.TakeDamage(1);
+            owner.TakeDamage(1);
+
+
         }
 
 

@@ -9,7 +9,9 @@ public struct PlayerState
     public string id;
     public string name;
     public float x, y, rotation, scale;
+    public float damaged; 
     public bool dead;
+    
 }
 
 [Serializable]
@@ -131,10 +133,12 @@ public class GameplayNet : MonoBehaviour
             y = p.y,
             rotation = r,
             scale = s,
+            damaged = localAvatar.GetComponent<PlayerController>().haveDamage,
             dead = localDead
         };
         last[ps.id] = ps;
         net.SendMessage(NetOperation.STATE, JsonUtility.ToJson(ps));
+        localAvatar.GetComponent<PlayerController>().haveDamage = 0;
     }
 
     void OnMsg(NetMsg m)
@@ -167,6 +171,8 @@ public class GameplayNet : MonoBehaviour
                 t.position = new Vector3(ps.x, ps.y, 0f);
                 t.rotation = Quaternion.Euler(0f, 0f, ps.rotation);
                 t.localScale = new Vector3(ps.scale, ps.scale, ps.scale);
+                t.GetComponent<PlayerController>().SetHealth(ps.damaged);
+                // vuestro de qitar la vida de verdad t.GetComponent<PlayerController>(). con  ps.damaged;
             }
 
             if (SessionConfig.IsHost) TryEndMatch();
@@ -234,5 +240,10 @@ public class GameplayNet : MonoBehaviour
     {
         if (!NetRuntime.winners.ContainsKey(name))
             NetRuntime.winners[name] = 0;
+    }
+
+    public void SendMessage(NetOperation op, string payloadJsonOrText)
+    {
+        net.SendMessage(op, payloadJsonOrText);
     }
 }

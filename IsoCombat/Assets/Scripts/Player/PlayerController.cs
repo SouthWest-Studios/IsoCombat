@@ -51,6 +51,8 @@ public class PlayerController : MonoBehaviour
     PolygonCollider2D upperBody;
     BoxCollider2D lowerBody;
 
+    public float haveDamage = 0;
+
 
     // Start is called before the first frame update
     void Start()
@@ -83,6 +85,11 @@ public class PlayerController : MonoBehaviour
             }
 
             UpdateMovement();
+
+            if (Input.GetKeyDown(KeyCode.K))
+            {
+                TakeDamage(1);
+            }
 
         }
         UpdateInvulnerability();
@@ -200,15 +207,21 @@ public class PlayerController : MonoBehaviour
 
     public void TakeDamage(float amount)
     {
+        haveDamage = amount;
         if (isDead) return;
 
-        currentHealth -= amount;
-        currentHealth = Mathf.Max(0, currentHealth);
+        SetHealth(amount);
 
         if (currentHealth <= 0)
         {
             PlayerDie();
         }
+    }
+
+    public void SetHealth(float damage)
+    {
+        currentHealth -= damage;
+        currentHealth = Mathf.Max(0, currentHealth);
     }
 
 

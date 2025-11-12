@@ -31,6 +31,7 @@ public class MidGameUI : MonoBehaviour
 
             int idx = i;
             btn.GetComponentInChildren<TMPro.TextMeshProUGUI>().text = offered[i].title;
+            btn.GetComponentInChildren<Image>().sprite = offered[i].icon;
             PaintButtonByStars(btn, offered[i].starsRarity);
             btn.onClick.RemoveAllListeners();
             btn.onClick.AddListener(() => Pick(offered[idx]));

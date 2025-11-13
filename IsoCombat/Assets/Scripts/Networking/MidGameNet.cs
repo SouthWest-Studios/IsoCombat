@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 
 [Serializable] public struct RankEntry{public string name; public int wins; }
-[Serializable] public struct RankPayload { public RankEntry[] entries; }
+[Serializable] public struct RankPayload { public RankEntry[] entries; public string lastWinner; }
 [Serializable] public struct PlayerRankUI{ public TextMeshProUGUI text; public Image rank_bar; }
 
 [Serializable] public struct UpgradePick { public string playerId; public StatModEntry[] mods; }
@@ -96,6 +96,10 @@ public class MidGameNet : MonoBehaviour
                 if (rp.entries == null || rp.entries.Length == 0) return;
                 NetRuntime.winners.Clear();
                 foreach (var e in rp.entries) NetRuntime.winners[e.name] = e.wins;
+                if (rp.lastWinner == SessionConfig.ClientId + "_" + SessionConfig.PlayerName) {
+                    MidGameUI.I.DesactivarMejoras();
+                }
+                Debug.Log("Last winner: " + rp.lastWinner + " my name: " + SessionConfig.ClientId + "_" + SessionConfig.PlayerName);
                 Render(LocalSnapshot());
                 break;
 
@@ -133,7 +137,7 @@ public class MidGameNet : MonoBehaviour
     void TryAdvanceRound()
     {
         if (!SessionConfig.IsHost) return;
-        if (ready.Count == 0 || picked.Count < ready.Count) return;
+        if (ready.Count == 0 || picked.Count < ready.Count-1) return;
 
         // snapshot mods por jugador
         var players = new List<PlayerMods>();
@@ -161,7 +165,7 @@ public class MidGameNet : MonoBehaviour
         if (!SessionConfig.IsHost) return;
         var list = new List<RankEntry>();
         foreach (var kv in NetRuntime.winners) list.Add(new RankEntry { name = kv.Key, wins = kv.Value });
-        var payload = JsonUtility.ToJson(new RankPayload { entries = list.ToArray() });
+        var payload = JsonUtility.ToJson(new RankPayload { entries = list.ToArray(), lastWinner = NetRuntime.lastWinner }) ;
         net.SendMessage(NetOperation.SHOW_RANK, payload);
     }
 }

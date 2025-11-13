@@ -9,17 +9,25 @@ public class MidGameUI : MonoBehaviour
     public Button[] choices;
     Upgrade[] offered;
 
+    public RectTransform textWaiting;
+
     [Header("Pesos por estrella (1..5)")]
     public int w1 = 30, w2 = 25, w3 = 20, w4 = 15, w5 = 10;
     public Color c1 = Color.white, c2 = Color.green, c3 = Color.blue, c4 = Color.magenta, c5 = Color.red;
 
+    public static MidGameUI I;
+    private void Awake()
+    {
+        I = this;
+    }
     void Start()
     {
-        if (SessionConfig.IsSpectator)
+        if (SessionConfig.IsSpectator || NetRuntime.lastWinner == SessionConfig.ClientId + "_" + SessionConfig.PlayerName)
         {
-            foreach (var b in choices) if (b) b.interactable = false;
+            DesactivarMejoras();
             return;
         }
+        textWaiting.gameObject.SetActive(false);
         offered = DrawThree(pool, new int[] { w1, w2, w3, w4, w5 });
 
         for (int i = 0; i < choices.Length; i++)
@@ -38,6 +46,12 @@ public class MidGameUI : MonoBehaviour
         }
     }
 
+    public void DesactivarMejoras()
+    {
+        foreach (var b in choices) if (b) b.gameObject.SetActive(false);
+        textWaiting.gameObject.SetActive(true);
+    }
+
     void Pick(Upgrade u)
     {
         if (SessionConfig.IsSpectator) return;
@@ -48,7 +62,9 @@ public class MidGameUI : MonoBehaviour
             mods = u.entries.ToArray()
         };
         MidGameNet.I.SendUpgradePicked(p);
-        foreach (var b in choices) b.interactable = false;
+        //foreach (var b in choices) b.interactable = false;
+        foreach (var b in choices) if (b) b.gameObject.SetActive(false);
+        textWaiting.gameObject.SetActive(true);
     }
 
     Color GetColorByStar(int star)

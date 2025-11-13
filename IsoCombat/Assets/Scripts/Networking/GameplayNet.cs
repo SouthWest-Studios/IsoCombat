@@ -356,6 +356,7 @@ public class GameplayNet : MonoBehaviour
             matchEnded = true;
             AddToWinnerList(winner);
             NetRuntime.winners[winner] += 1;
+            NetRuntime.lastWinner = winner;
 
             if (NetRuntime.winners[winner] >= 3)
             {

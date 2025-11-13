@@ -42,9 +42,19 @@ public struct SpawnAssignment
     public int spawnIndex;
 }
 
+[Serializable]
+public struct BulletHitMsg
+{
+    public string ownerId;
+    public string bulletId;
+}
+
 public class GameplayNet : MonoBehaviour
 {
+    public static GameplayNet I;
+
     public GameObject playerPrefab;
+    public GameObject bulletPrefab;
     public bool localDead = false;
 
     [SerializeField] private Transform spawn0;
@@ -73,6 +83,7 @@ public class GameplayNet : MonoBehaviour
     INetwork net;
     readonly Dictionary<string, Transform> avatars = new();
     readonly Dictionary<string, PlayerState> last = new();
+    readonly Dictionary<string, Dictionary<string, Rigidbody2D>> remoteBullets = new();
     Transform localAvatar;
     PlayerController pcLocal;
     float sendTimer;
@@ -90,6 +101,11 @@ public class GameplayNet : MonoBehaviour
         NetRuntime.colors[playerId] = c;
         siguienteIndiceColor++;
         return c;
+    }
+
+    private void Awake()
+    {
+        I = this;
     }
 
     void Start()
@@ -222,19 +238,28 @@ public class GameplayNet : MonoBehaviour
     {
         if (localDead && !immediate) return;
 
+        PlayerController pcLocal = localAvatar.GetComponent<PlayerController>();
+
         Vector2 p = localAvatar.position;
         float r = localAvatar.rotation.eulerAngles.z;
         float s = localAvatar.localScale.x;
 
-        //Vector3 bulletPos = localAvatar.GetComponent<PlayerController>().bulletPrefab.transform.position;
+        //Bullets
+        List<BulletState> bullets = new List<BulletState>();
+        foreach(Rigidbody2D bulletRB in pcLocal.bullets)
+        {
+            BulletNetInfo info = bulletRB.GetComponent<BulletNetInfo>();
 
-
-        //List<BulletState> bullets = new List<BulletState>();
+            bullets.Add(new BulletState {
+                id = info != null ? info.bulletId : bulletRB.GetInstanceID().ToString(),
+                bulletRotation = bulletRB.rotation,
+                bulletScale = bulletRB.transform.localScale.x,
+                bulletX = bulletRB.transform.position.x,
+                bulletY = bulletRB.transform.position.y
+            });
+        }
         
-        //bullets.Add(localAvatar.GetComponent<PlayerController>().bulletSpeed)
-
-            //hacer la misma estructura de bullets en el player
-
+        //PlayerStats
         var ps = new PlayerState
         {
             id = SessionConfig.ClientId,
@@ -243,15 +268,14 @@ public class GameplayNet : MonoBehaviour
             y = p.y,
             rotation = r,
             scale = s,
-            damaged = localAvatar.GetComponent<PlayerController>().haveDamage,
+            damaged = pcLocal.haveDamage,
             dead = localDead,
-            //bullets = bullets,
-
+            bullets = bullets,
         };
 
         last[ps.id] = ps;
         net.SendMessage(NetOperation.STATE, JsonUtility.ToJson(ps));
-        localAvatar.GetComponent<PlayerController>().haveDamage = 0;
+        pcLocal.haveDamage = 0;
     }
 
     void OnMsg(NetMsg m)
@@ -296,9 +320,50 @@ public class GameplayNet : MonoBehaviour
                 }
             }
 
-            foreach(BulletState b in ps.bullets)
+            if (!remoteBullets.TryGetValue(ps.id, out var playerBullets))
             {
+                playerBullets = new Dictionary<string, Rigidbody2D>();
+                remoteBullets[ps.id] = playerBullets;
+            }
 
+            HashSet<string> idsRecibidos = new HashSet<string>();
+            var bulletsList = ps.bullets ?? new List<BulletState>();
+            foreach (BulletState b in bulletsList)
+            {
+                idsRecibidos.Add(b.id);
+
+                if (!playerBullets.TryGetValue(b.id, out var rb) || rb == null)
+                {
+                    GameObject go = Instantiate(bulletPrefab);
+                    rb = go.GetComponent<Rigidbody2D>();
+                    rb.bodyType = RigidbodyType2D.Kinematic;
+
+                    BulletNetInfo info = go.GetComponent<BulletNetInfo>();
+                    if (info != null)
+                    {
+                        info.ownerId = ps.id;
+                        info.bulletId = b.id;
+                    }
+
+                    playerBullets[b.id] = rb;
+                }
+
+                rb.transform.position = new Vector3(b.bulletX, b.bulletY, 0f);
+                rb.transform.rotation = Quaternion.Euler(0f, 0f, b.bulletRotation);
+                rb.transform.localScale = Vector3.one * b.bulletScale;
+            }
+
+            List<string> idsLocales = new List<string>(playerBullets.Keys);
+            foreach (string bulletId in idsLocales)
+            {
+                if (!idsRecibidos.Contains(bulletId))
+                {
+                    Rigidbody2D rb = playerBullets[bulletId];
+                    if (rb != null)
+                        UnityEngine.Object.Destroy(rb.gameObject);
+
+                    playerBullets.Remove(bulletId);
+                }
             }
 
 
@@ -366,6 +431,13 @@ public class GameplayNet : MonoBehaviour
             CircleTransition.instance.CloseBlackScreen("MidRound");
             return;
         }
+
+        if (m.op == NetOperation.BULLET_HIT)
+        {
+            var hit = JsonUtility.FromJson<BulletHitMsg>(m.payload);
+            HandleBulletHit(hit);
+            return;
+        }
     }
 
     void TryEndMatch()
@@ -406,8 +478,59 @@ public class GameplayNet : MonoBehaviour
             NetRuntime.winners[name] = 0;
     }
 
+    void HandleBulletHit(BulletHitMsg hit)
+    {
+
+        if (SessionConfig.ClientId == hit.ownerId && localAvatar != null)
+        {
+            var pcLocal = localAvatar.GetComponent<PlayerController>();
+            if (pcLocal != null && pcLocal.bullets != null)
+            {
+                Rigidbody2D toRemove = null;
+
+                foreach (var rb in pcLocal.bullets)
+                {
+                    var info = rb.GetComponent<BulletNetInfo>();
+                    if (info != null && info.bulletId == hit.bulletId)
+                    {
+                        toRemove = rb;
+                        break;
+                    }
+                }
+
+                if (toRemove != null)
+                {
+                    pcLocal.bullets.Remove(toRemove);
+                    Destroy(toRemove.gameObject);
+                }
+            }
+        }
+
+        if (remoteBullets.TryGetValue(hit.ownerId, out var playerBullets))
+        {
+            if (playerBullets.TryGetValue(hit.bulletId, out var rb) && rb != null)
+            {
+                Destroy(rb.gameObject);
+                playerBullets.Remove(hit.bulletId);
+            }
+        }
+    }
+
     public void SendMessage(NetOperation op, string payloadJsonOrText)
     {
         net.SendMessage(op, payloadJsonOrText);
+    }
+
+    public void BulletHit(BulletNetInfo info)
+    {
+        if (info == null) return;
+        BulletHitMsg msg = new BulletHitMsg
+        {
+            ownerId = info.ownerId,
+            bulletId = info.bulletId
+        };
+
+        string json = JsonUtility.ToJson(msg);
+        NetRuntime.Net.SendMessage(NetOperation.BULLET_HIT, json);
     }
 }

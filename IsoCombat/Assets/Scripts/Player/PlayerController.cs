@@ -64,6 +64,8 @@ public class PlayerController : MonoBehaviour
 
     private bool canShoot = true;
 
+    public List<Rigidbody2D> bullets;
+
 
     private Transform worldMin;
     private Transform worldMax;
@@ -87,6 +89,8 @@ public class PlayerController : MonoBehaviour
 
         worldMin = WorldControler.I.worldMin;
         worldMax = WorldControler.I.worldMax;
+
+        if (bullets == null) bullets = new List<Rigidbody2D>();
 
     }
 
@@ -259,7 +263,7 @@ public class PlayerController : MonoBehaviour
 
     public void TakeDamage(float amount)
     {
-        haveDamage = amount;
+        haveDamage += amount;
         if (isDead) return;
 
         SetHealth(amount);
@@ -286,10 +290,33 @@ public class PlayerController : MonoBehaviour
         GameObject bullet = Instantiate(bulletPrefab, spawnPos, bulletRotation);
         Rigidbody2D bulletRb = bullet.GetComponent<Rigidbody2D>();
         bulletRb.linearVelocity = transform.up * bulletSpeed;
+        bullets.Add(bulletRb);
 
-        Destroy(bullet, 5f);
+        BulletNetInfo info = bullet.GetComponent<BulletNetInfo>();
+        if (info != null)
+        {
+            info.ownerId = SessionConfig.ClientId;
+            info.bulletId = bulletRb.GetInstanceID().ToString();
+        }
 
+        StartCoroutine(DestroyBullet(bulletRb, 5f));
         Invoke(nameof(ResetShoot), shootCooldown);
+    }
+
+    private IEnumerator DestroyBullet(Rigidbody2D bulletRb, float time)
+    {
+        yield return new WaitForSeconds(time);
+
+        DestroyBullet(bulletRb);
+    }
+
+    public void DestroyBullet(Rigidbody2D bulletRb)
+    {
+        if (bulletRb != null)
+        {
+            bullets.Remove(bulletRb);
+            Destroy(bulletRb.gameObject);
+        }
     }
 
     void ResetShoot()

@@ -631,6 +631,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerPrefab: {fileID: 7591603133035999463, guid: 5117655e4f1750d498e472f33fd5b989, type: 3}
+  bulletPrefab: {fileID: 4739321548757923663, guid: 3454fcc4133ba59438adbcb33b936171, type: 3}
   localDead: 0
   spawn0: {fileID: 1648485976}
   spawn1: {fileID: 698868738}

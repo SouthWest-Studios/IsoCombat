@@ -1,6 +1,7 @@
 using System.Collections;
 using Unity.VisualScripting;
 using UnityEngine;
+using static UnityEngine.UI.GridLayoutGroup;
 
 public class PlayerColliderPart : MonoBehaviour
 {
@@ -17,20 +18,21 @@ public class PlayerColliderPart : MonoBehaviour
 
     void OnCollisionEnter2D(Collision2D collision)
     {
-        if (collision.gameObject.CompareTag("Bullet"))
-        {
-            owner.TakeDamage(1);
-            Destroy(collision.gameObject);         
-            return;
-        }
-        var otherPart = collision.collider.GetComponent<PlayerColliderPart>();
-        if (otherPart == null) return;
-
         if (!owner.isPlayerLocal) return;
 
+        if (collision.gameObject.CompareTag("Bullet"))
+        {
+            
+            owner.TakeDamage(1);
+            GameplayNet.I.BulletHit(collision.gameObject.GetComponent<BulletNetInfo>());
+            owner.DestroyBullet(collision.gameObject.GetComponent<Rigidbody2D>());
+            return;
+        }
 
 
+        var otherPart = collision.collider.GetComponent<PlayerColliderPart>();
 
+        if (otherPart == null) return;
         if (otherPart.owner == owner) return;
 
         Rigidbody2D rbOwner = owner.GetComponent<Rigidbody2D>();

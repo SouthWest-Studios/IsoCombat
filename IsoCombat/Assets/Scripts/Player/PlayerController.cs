@@ -131,7 +131,7 @@ public class PlayerController : MonoBehaviour
             else
             {
                 canMove = false;
-                yield return new WaitForSeconds(0.5f);
+                yield return new WaitForSeconds(stats.Get(StatId.Stun));
                 canMove = true;
                 break;
             }

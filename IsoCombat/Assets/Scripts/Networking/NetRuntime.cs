@@ -6,6 +6,7 @@ public class NetRuntime : MonoBehaviour
     public static INetwork Net;
 
     public static Dictionary<string, int> winners = new Dictionary<string, int>();
+    public static Dictionary<string, Color> colors = new Dictionary<string, Color>();
     public static string lastWinner = "";
     public static void Attach(INetwork net)
     {

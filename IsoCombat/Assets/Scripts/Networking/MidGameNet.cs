@@ -71,7 +71,7 @@ public class MidGameNet : MonoBehaviour
             rankUI[i].text.text = $"{display}";
             rankUI[i].rank_bar.fillAmount = Mathf.Clamp01(e.Value / 3f);
         }
-        for (int i = count; i < rankUI.Length; i++) { rankUI[i].text.text = ""; rankUI[i].rank_bar.fillAmount = 0f; }
+        for (int i = count; i < rankUI.Length; i++) { rankUI[i].text.text = ""; rankUI[i].rank_bar.fillAmount = 0f; rankUI[i].rank_bar.gameObject.SetActive(false); }
     }
 
     public void SendUpgradePicked(UpgradePick p)

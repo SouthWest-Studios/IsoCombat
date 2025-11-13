@@ -56,7 +56,7 @@ public class EndGameNet : MonoBehaviour
             rankUI[i].text.text = $"{i + 1}. {display}";
             rankUI[i].rank_bar.fillAmount = Mathf.Clamp01(e.Value / 3f);
         }
-        for (int i = count; i < rankUI.Length; i++) { rankUI[i].text.text = ""; rankUI[i].rank_bar.fillAmount = 0f; }
+        for (int i = count; i < rankUI.Length; i++) { rankUI[i].text.text = ""; rankUI[i].rank_bar.fillAmount = 0f; rankUI[i].rank_bar.gameObject.SetActive(false); }
     }
 
     void OnMsg(NetMsg m)

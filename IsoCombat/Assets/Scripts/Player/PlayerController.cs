@@ -108,23 +108,33 @@ public class PlayerController : MonoBehaviour
 
         float dashTimer = 0f;
 
-        while (Input.GetMouseButton(0) && dashTimer < dashDuration)
+        while (Input.GetMouseButton(0))
         {
-            dashTimer += Time.deltaTime;
+            if (dashTimer < dashDuration)
+            {
+                dashTimer += Time.deltaTime;
 
-            Vector2 currentPosition = transform.position;
-            Vector3 mouseWorldPos3 = mainCamera.ScreenToWorldPoint(Input.mousePosition);
-            mouseWorldPos3.z = transform.position.z;
-            Vector2 mouseWorldPos = mouseWorldPos3;
+                Vector2 currentPosition = transform.position;
+                Vector3 mouseWorldPos3 = mainCamera.ScreenToWorldPoint(Input.mousePosition);
+                mouseWorldPos3.z = transform.position.z;
+                Vector2 mouseWorldPos = mouseWorldPos3;
 
-            Vector2 dir = mouseWorldPos - currentPosition;
-            if (dir.sqrMagnitude > 0.0001f)
-                transform.up = dir;
+                Vector2 dir = mouseWorldPos - currentPosition;
+                if (dir.sqrMagnitude > 0.0001f)
+                    transform.up = dir;
 
-            Vector2 newPosition = Vector2.MoveTowards(currentPosition, mouseWorldPos, stats.Get(StatId.MoveSpeed) * dashMultiplier * Time.deltaTime);
-            transform.position = newPosition;
+                Vector2 newPosition = Vector2.MoveTowards(currentPosition, mouseWorldPos, stats.Get(StatId.MoveSpeed) * dashMultiplier * Time.deltaTime);
+                transform.position = newPosition;
 
-            yield return null;
+                yield return null;
+            }
+            else
+            {
+                canMove = false;
+                yield return new WaitForSeconds(0.5f);
+                canMove = true;
+                break;
+            }
         }
 
         isDashing = false;
@@ -132,6 +142,7 @@ public class PlayerController : MonoBehaviour
         yield return new WaitForSeconds(dashCooldown);
         canDash = true;
     }
+
 
     public void AssignColor(Color c)
     {

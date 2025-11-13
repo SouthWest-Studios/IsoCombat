@@ -26,6 +26,8 @@ public class StatsRuntime : MonoBehaviour
         finalValues[StatId.MoveSpeed] = baseStats.Get(StatId.MoveSpeed);
         finalValues[StatId.Scale] = baseStats.Get(StatId.Scale);
         finalValues[StatId.Stun] = baseStats.Get(StatId.Stun);
+        finalValues[StatId.Regen] = baseStats.Get(StatId.Regen);
+        finalValues[StatId.RegenSpeed] = baseStats.Get(StatId.RegenSpeed);
 
         
         foreach (var m in mods) if (m.op == ModOp.Add) finalValues[m.id] += m.value;

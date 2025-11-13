@@ -40,6 +40,7 @@ public class PlayerController : MonoBehaviour
 
     //Timer
     private float timeCounter = 0;
+    private bool isRegenRunning = false;
 
     //Invulnerability
     [HideInInspector] public float invulnerabilityTimer = 0f;
@@ -72,6 +73,8 @@ public class PlayerController : MonoBehaviour
         float scale = stats.Get(StatId.Scale);
         transform.localScale = new Vector3(scale, scale, scale);
         playerSprite.GetComponent<SpriteRenderer>().material.SetFloat("_FillAmount", currentHealth / stats.Get(StatId.MaxHP));
+
+        StartCoroutine(RegenRoutine());
     }
 
     // Update is called once per frame
@@ -110,6 +113,8 @@ public class PlayerController : MonoBehaviour
             }
 
         }
+
+
         UpdateInvulnerability();
 
 
@@ -273,6 +278,15 @@ public class PlayerController : MonoBehaviour
     {
         canShoot = true;
     }
+    IEnumerator RegenRoutine()
+    {
+        while (isPlayerLocal && !isDead)
+        {
+            yield return new WaitForSeconds(stats.Get(StatId.RegenSpeed));
+            currentHealth += stats.Get(StatId.Regen);
+        }
+    }
+
 
 
 

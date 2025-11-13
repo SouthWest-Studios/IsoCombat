@@ -17,14 +17,19 @@ public class PlayerColliderPart : MonoBehaviour
 
     void OnCollisionEnter2D(Collision2D collision)
     {
-
+        if (collision.gameObject.CompareTag("Bullet"))
+        {
+            owner.TakeDamage(1);
+            Destroy(collision.gameObject);         
+            return;
+        }
         var otherPart = collision.collider.GetComponent<PlayerColliderPart>();
         if (otherPart == null) return;
 
         if (!owner.isPlayerLocal) return;
 
 
-        
+
 
         if (otherPart.owner == owner) return;
 
@@ -38,6 +43,8 @@ public class PlayerColliderPart : MonoBehaviour
             Debug.Log($"{owner.name} golpeó a {otherPart.owner.name}");
             owner.TakeDamage(1);
         }
+
+
 
         if (rbOwner != null && rbOther != null)
         {

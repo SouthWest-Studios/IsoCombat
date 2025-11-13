@@ -270,51 +270,8 @@ public class GameplayNet : MonoBehaviour
                 }
             }
 
-            if (!remoteBullets.TryGetValue(ps.id, out var playerBullets))
-            {
-                playerBullets = new Dictionary<string, Rigidbody2D>();
-                remoteBullets[ps.id] = playerBullets;
-            }
-
-            HashSet<string> idsRecibidos = new HashSet<string>();
-            var bulletsList = ps.bullets ?? new List<BulletState>();
-            foreach (BulletState b in bulletsList)
-            {
-                idsRecibidos.Add(b.id);
-
-                if (!playerBullets.TryGetValue(b.id, out var rb) || rb == null)
-                {
-                    GameObject go = Instantiate(bulletPrefab);
-                    rb = go.GetComponent<Rigidbody2D>();
-                    rb.bodyType = RigidbodyType2D.Kinematic;
-
-                    BulletNetInfo info = go.GetComponent<BulletNetInfo>();
-                    if (info != null)
-                    {
-                        info.ownerId = ps.id;
-                        info.bulletId = b.id;
-                    }
-
-                    playerBullets[b.id] = rb;
-                }
-
-                rb.transform.position = new Vector3(b.bulletX, b.bulletY, 0f);
-                rb.transform.rotation = Quaternion.Euler(0f, 0f, b.bulletRotation);
-                rb.transform.localScale = Vector3.one * b.bulletScale;
-            }
-
-            List<string> idsLocales = new List<string>(playerBullets.Keys);
-            foreach (string bulletId in idsLocales)
-            {
-                if (!idsRecibidos.Contains(bulletId))
-                {
-                    Rigidbody2D rb = playerBullets[bulletId];
-                    if (rb != null)
-                        UnityEngine.Object.Destroy(rb.gameObject);
-
-                    playerBullets.Remove(bulletId);
-                }
-            }
+            //Bullets
+            SyncRemoteBullets(ps.id, ps.bullets);
 
 
             if (ps.dead)
@@ -428,9 +385,58 @@ public class GameplayNet : MonoBehaviour
         net.SendMessage(NetOperation.PLAYER_COLOR, JsonUtility.ToJson(allColors));
     }
 
+    void SyncRemoteBullets(string ownerId, List<BulletState> bulletStates)
+    {
+        if (!remoteBullets.TryGetValue(ownerId, out var playerBullets))
+        {
+            playerBullets = new Dictionary<string, Rigidbody2D>();
+            remoteBullets[ownerId] = playerBullets;
+        }
+
+        var idsRecibidos = new HashSet<string>();
+        var list = bulletStates ?? new List<BulletState>();
+
+        foreach (var b in list)
+        {
+            idsRecibidos.Add(b.id);
+
+            if (!playerBullets.TryGetValue(b.id, out var rb) || rb == null)
+            {
+                var go = Instantiate(bulletPrefab);
+                rb = go.GetComponent<Rigidbody2D>();
+                rb.bodyType = RigidbodyType2D.Kinematic;
+
+                var info = go.GetComponent<BulletNetInfo>();
+                if (info != null)
+                {
+                    info.ownerId = ownerId;
+                    info.bulletId = b.id;
+                }
+
+                playerBullets[b.id] = rb;
+            }
+
+            rb.transform.position = new Vector3(b.bulletX, b.bulletY, 0f);
+            rb.transform.rotation = Quaternion.Euler(0f, 0f, b.bulletRotation);
+            rb.transform.localScale = Vector3.one * b.bulletScale;
+        }
+
+        //Destruir las balas que hagan falta
+        var idsLocales = new List<string>(playerBullets.Keys);
+        foreach (var bulletId in idsLocales)
+        {
+            if (!idsRecibidos.Contains(bulletId))
+            {
+                var rb = playerBullets[bulletId];
+                if (rb != null) Destroy(rb.gameObject);
+                playerBullets.Remove(bulletId);
+            }
+        }
+    }
+
     void HandleBulletHit(BulletHitMsg hit)
     {
-
+        //Local
         if (SessionConfig.ClientId == hit.ownerId && localAvatar != null)
         {
             var pcLocal = localAvatar.GetComponent<PlayerController>();
@@ -456,6 +462,7 @@ public class GameplayNet : MonoBehaviour
             }
         }
 
+        //Remotas
         if (remoteBullets.TryGetValue(hit.ownerId, out var playerBullets))
         {
             if (playerBullets.TryGetValue(hit.bulletId, out var rb) && rb != null)

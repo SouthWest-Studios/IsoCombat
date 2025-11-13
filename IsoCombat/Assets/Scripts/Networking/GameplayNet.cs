@@ -94,8 +94,8 @@ public class GameplayNet : MonoBehaviour
 
     Color GetColorJugador(string playerId)
     {
-        if (NetRuntime.colors.ContainsKey(playerId))
-            return NetRuntime.colors[playerId];
+        if (NetRuntime.colors.TryGetValue(playerId, out var existing))
+            return existing;
 
         Color c = coloresFijos[siguienteIndiceColor % coloresFijos.Length];
         NetRuntime.colors[playerId] = c;
@@ -126,6 +126,9 @@ public class GameplayNet : MonoBehaviour
 
             int spawnIndex = Mathf.Abs(SessionConfig.ClientId.GetHashCode()) % 4;
             SetPlayerAtSpawn(localAvatar.gameObject, spawnIndex);
+
+            pcLocal = localAvatar.GetComponent<PlayerController>();
+            pcLocal.isPlayerLocal = true;
         }
         else
         {
@@ -133,54 +136,13 @@ public class GameplayNet : MonoBehaviour
             UnityEngine.Debug.Log("[GameplayNet] Espectador: no se instancia avatar local.");
         }
 
-        if (localAvatar != null)
-        {
-            pcLocal = localAvatar.GetComponent<PlayerController>();
-            pcLocal.isPlayerLocal = true;
-
-            // Asignar color local
-            Color colorAsignado = GetColorJugador(SessionConfig.ClientId);
-            pcLocal.AssignColor(colorAsignado);
-        }
-
-        // Solo el host decide y comunica los colores
+        
         if (SessionConfig.IsHost)
         {
-            // Asegura que el host tenga color asignado, aunque no exista avatar local
-            if (!NetRuntime.colors.TryGetValue(SessionConfig.ClientId, out var myColor))
-            {
-                myColor = GetColorJugador(SessionConfig.ClientId);
-                NetRuntime.colors[SessionConfig.ClientId] = myColor;
-            }
 
-            // Si hay avatar local, aplícale su color
-            if (pcLocal != null)
-                pcLocal.AssignColor(myColor);
-
-            // Construye y envía la tabla completa de colores
-            var allColors = new AllPlayerColorsMsg { players = new List<PlayerColorMsg>() };
-            foreach (var kv in NetRuntime.colors)
-            {
-                allColors.players.Add(new PlayerColorMsg
-                {
-                    playerId = kv.Key,
-                    color = ColorUtility.ToHtmlStringRGB(kv.Value)
-                });
-            }
-
-            net.SendMessage(NetOperation.PLAYER_COLOR, JsonUtility.ToJson(allColors));
-
-            // Reaplica colores a avatares que ya estén en escena
-            foreach (var kv in NetRuntime.colors)
-            {
-                if (kv.Key == SessionConfig.ClientId)
-                {
-                    if (pcLocal != null) pcLocal.AssignColor(kv.Value);
-                    continue;
-                }
-                if (avatars.TryGetValue(kv.Key, out var t) && t != null)
-                    t.GetComponent<PlayerController>().AssignColor(kv.Value);
-            }
+            Color myColor = GetColorJugador(SessionConfig.ClientId);
+            if (pcLocal != null) pcLocal.AssignColor(myColor);
+            BroadcastAllColors();
         }
 
 
@@ -292,31 +254,19 @@ public class GameplayNet : MonoBehaviour
                 t.name = $"REMOTE_{ps.name}_{ps.id}";
                 avatars[ps.id] = t;
 
-                // Si ya tenemos el color asignado por el servidor, lo aplicamos
-                if (NetRuntime.colors.TryGetValue(ps.id, out var c))
-                    t.GetComponent<PlayerController>().AssignColor(c);
-                else
-                    Debug.LogWarning($"Color del jugador {ps.id} a�n no recibido del servidor");
-
                 AddToWinnerList(ps.id + "_" + ps.name);
 
-                // Si somos el host, asignamos color y lo enviamos a todos
+                //Color
                 if (SessionConfig.IsHost)
                 {
                     Color nuevoColor = GetColorJugador(ps.id);
-                    NetRuntime.colors[ps.id] = nuevoColor;
                     t.GetComponent<PlayerController>().AssignColor(nuevoColor);
-
-                    var allColors = new AllPlayerColorsMsg { players = new List<PlayerColorMsg>() };
-                    foreach (var kv in NetRuntime.colors)
-                    {
-                        allColors.players.Add(new PlayerColorMsg
-                        {
-                            playerId = kv.Key,
-                            color = ColorUtility.ToHtmlStringRGB(kv.Value)
-                        });
-                    }
-                    net.SendMessage(NetOperation.PLAYER_COLOR, JsonUtility.ToJson(allColors));
+                    BroadcastAllColors();
+                }
+                else
+                {
+                    if (NetRuntime.colors.TryGetValue(ps.id, out var c))
+                        t.GetComponent<PlayerController>().AssignColor(c);
                 }
             }
 
@@ -389,33 +339,19 @@ public class GameplayNet : MonoBehaviour
 
         if (m.op == NetOperation.PLAYER_COLOR)
         {
-            try
+            var all = JsonUtility.FromJson<AllPlayerColorsMsg>(m.payload);
+            foreach (var p in all.players)
             {
-                var all = JsonUtility.FromJson<AllPlayerColorsMsg>(m.payload);
-                foreach (var p in all.players)
+                if (ColorUtility.TryParseHtmlString("#" + p.color, out Color c))
                 {
-                    if (ColorUtility.TryParseHtmlString("#" + p.color, out Color c))
-                    {
-                        NetRuntime.colors[p.playerId] = c;
-                        if (avatars.TryGetValue(p.playerId, out var t) && t != null)
-                            t.GetComponent<PlayerController>().AssignColor(c);
-                        else if (p.playerId == SessionConfig.ClientId && pcLocal != null)
-                            pcLocal.AssignColor(c);
-                    }
-                }
-            }
-            catch
-            {
-                var msg = JsonUtility.FromJson<PlayerColorMsg>(m.payload);
-                if (ColorUtility.TryParseHtmlString("#" + msg.color, out Color c))
-                {
-                    NetRuntime.colors[msg.playerId] = c;
-                    if (avatars.TryGetValue(msg.playerId, out var t) && t != null)
+                    NetRuntime.colors[p.playerId] = c;
+                    if (avatars.TryGetValue(p.playerId, out var t) && t != null)
                         t.GetComponent<PlayerController>().AssignColor(c);
-                    else if (msg.playerId == SessionConfig.ClientId && pcLocal != null)
+                    else if (p.playerId == SessionConfig.ClientId && pcLocal != null)
                         pcLocal.AssignColor(c);
                 }
             }
+            return;
         }
 
         if (m.op == NetOperation.BACK_TO_LOBBY)
@@ -476,6 +412,20 @@ public class GameplayNet : MonoBehaviour
     {
         if (!NetRuntime.winners.ContainsKey(name))
             NetRuntime.winners[name] = 0;
+    }
+
+    void BroadcastAllColors()
+    {
+        var allColors = new AllPlayerColorsMsg { players = new List<PlayerColorMsg>() };
+        foreach (var kv in NetRuntime.colors)
+        {
+            allColors.players.Add(new PlayerColorMsg
+            {
+                playerId = kv.Key,
+                color = ColorUtility.ToHtmlStringRGB(kv.Value)
+            });
+        }
+        net.SendMessage(NetOperation.PLAYER_COLOR, JsonUtility.ToJson(allColors));
     }
 
     void HandleBulletHit(BulletHitMsg hit)

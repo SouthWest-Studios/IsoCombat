@@ -473,6 +473,7 @@ MonoBehaviour:
   isDead: 0
   canMove: 1
   mainCamera: {fileID: 0}
+  rotationSpeed: 360
   dashMultiplier: 2
   dashDuration: 2
   dashCooldown: 1

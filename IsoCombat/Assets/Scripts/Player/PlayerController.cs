@@ -1,11 +1,10 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using static UnityEngine.Rendering.DebugUI;
+
 
 
 public class PlayerController : MonoBehaviour
@@ -30,6 +29,7 @@ public class PlayerController : MonoBehaviour
     public Camera mainCamera;
     private Vector2 targetPosition;
     private float screenMargin = 0.5f;
+    public float rotationSpeed;
 
     //Dash
     public float dashMultiplier = 2f;
@@ -171,17 +171,28 @@ public class PlayerController : MonoBehaviour
 
     void UpdateMovement()
     {
-
         Vector2 currentPosition = transform.position;
         Vector3 mouseWorldPos3 = mainCamera.ScreenToWorldPoint(Input.mousePosition);
-        mouseWorldPos3.z = transform.position.z;           
+        mouseWorldPos3.z = transform.position.z;
         Vector2 mouseWorldPos = mouseWorldPos3;
 
         Vector2 dir = mouseWorldPos - currentPosition;
-        if (dir.sqrMagnitude > 0.0001f)
-            transform.up = dir;                            
 
-        Vector2 newPosition = Vector2.MoveTowards(currentPosition, mouseWorldPos, stats.Get(StatId.MoveSpeed) * Time.deltaTime);
+        if (dir.sqrMagnitude > 0.0001f)
+        {
+            float targetAngle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg - 90f;
+            Quaternion targetRot = Quaternion.AngleAxis(targetAngle, Vector3.forward);
+
+            transform.rotation = Quaternion.RotateTowards(
+                transform.rotation,
+                targetRot,
+                rotationSpeed * Time.deltaTime
+            );
+        }
+
+        Vector2 forward = transform.up; 
+        Vector2 newPosition = currentPosition + forward * stats.Get(StatId.MoveSpeed) * Time.deltaTime;
+
 
         float camHeight = mainCamera.orthographicSize;
         float camWidth = camHeight * mainCamera.aspect;
@@ -200,8 +211,6 @@ public class PlayerController : MonoBehaviour
     void UpdateInvulnerability()
     {
         bool inputActivado = Input.GetMouseButtonDown(1) || Input.GetAxis("Fire2") > 0.1f;
-
-        
     }
 
 

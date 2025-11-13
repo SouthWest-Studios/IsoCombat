@@ -70,16 +70,15 @@ public class GameplayNet : MonoBehaviour
     bool matchEnded;
 
     private Color[] coloresFijos = new Color[] { Color.red, Color.green, Color.yellow, Color.blue };
-    private Dictionary<string, Color> coloresAsignados = new Dictionary<string, Color>();
     private int siguienteIndiceColor = 0;
 
     Color GetColorJugador(string playerId)
     {
-        if (coloresAsignados.ContainsKey(playerId))
-            return coloresAsignados[playerId];
+        if (NetRuntime.colors.ContainsKey(playerId))
+            return NetRuntime.colors[playerId];
 
         Color c = coloresFijos[siguienteIndiceColor % coloresFijos.Length];
-        coloresAsignados[playerId] = c;
+        NetRuntime.colors[playerId] = c;
         siguienteIndiceColor++;
         return c;
     }
@@ -123,10 +122,10 @@ public class GameplayNet : MonoBehaviour
         if (SessionConfig.IsHost)
         {
             // Asegura que el host tenga color asignado, aunque no exista avatar local
-            if (!coloresAsignados.TryGetValue(SessionConfig.ClientId, out var myColor))
+            if (!NetRuntime.colors.TryGetValue(SessionConfig.ClientId, out var myColor))
             {
                 myColor = GetColorJugador(SessionConfig.ClientId);
-                coloresAsignados[SessionConfig.ClientId] = myColor;
+                NetRuntime.colors[SessionConfig.ClientId] = myColor;
             }
 
             // Si hay avatar local, aplícale su color
@@ -135,7 +134,7 @@ public class GameplayNet : MonoBehaviour
 
             // Construye y envía la tabla completa de colores
             var allColors = new AllPlayerColorsMsg { players = new List<PlayerColorMsg>() };
-            foreach (var kv in coloresAsignados)
+            foreach (var kv in NetRuntime.colors)
             {
                 allColors.players.Add(new PlayerColorMsg
                 {
@@ -147,7 +146,7 @@ public class GameplayNet : MonoBehaviour
             net.SendMessage(NetOperation.PLAYER_COLOR, JsonUtility.ToJson(allColors));
 
             // Reaplica colores a avatares que ya estén en escena
-            foreach (var kv in coloresAsignados)
+            foreach (var kv in NetRuntime.colors)
             {
                 if (kv.Key == SessionConfig.ClientId)
                 {
@@ -250,7 +249,7 @@ public class GameplayNet : MonoBehaviour
                 avatars[ps.id] = t;
 
                 // Si ya tenemos el color asignado por el servidor, lo aplicamos
-                if (coloresAsignados.TryGetValue(ps.id, out var c))
+                if (NetRuntime.colors.TryGetValue(ps.id, out var c))
                     t.GetComponent<PlayerController>().AssignColor(c);
                 else
                     Debug.LogWarning($"Color del jugador {ps.id} a�n no recibido del servidor");
@@ -261,10 +260,10 @@ public class GameplayNet : MonoBehaviour
                 if (SessionConfig.IsHost)
                 {
                     Color nuevoColor = GetColorJugador(ps.id);
-                    coloresAsignados[ps.id] = nuevoColor;
+                    NetRuntime.colors[ps.id] = nuevoColor;
 
                     var allColors = new AllPlayerColorsMsg { players = new List<PlayerColorMsg>() };
-                    foreach (var kv in coloresAsignados)
+                    foreach (var kv in NetRuntime.colors)
                     {
                         allColors.players.Add(new PlayerColorMsg
                         {
@@ -304,7 +303,7 @@ public class GameplayNet : MonoBehaviour
                 {
                     if (ColorUtility.TryParseHtmlString("#" + p.color, out Color c))
                     {
-                        coloresAsignados[p.playerId] = c;
+                        NetRuntime.colors[p.playerId] = c;
                         if (avatars.TryGetValue(p.playerId, out var t) && t != null)
                             t.GetComponent<PlayerController>().AssignColor(c);
                         else if (p.playerId == SessionConfig.ClientId && pcLocal != null)
@@ -317,7 +316,7 @@ public class GameplayNet : MonoBehaviour
                 var msg = JsonUtility.FromJson<PlayerColorMsg>(m.payload);
                 if (ColorUtility.TryParseHtmlString("#" + msg.color, out Color c))
                 {
-                    coloresAsignados[msg.playerId] = c;
+                    NetRuntime.colors[msg.playerId] = c;
                     if (avatars.TryGetValue(msg.playerId, out var t) && t != null)
                         t.GetComponent<PlayerController>().AssignColor(c);
                     else if (msg.playerId == SessionConfig.ClientId && pcLocal != null)

@@ -1,3 +1,4 @@
+using JetBrains.Annotations;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -11,6 +12,14 @@ public struct PlayerState
     public float x, y, rotation, scale;
     public float damaged;
     public bool dead;
+    public List<BulletState> bullets;
+    
+}
+
+[Serializable]
+public struct BulletState {
+    public string id;
+    public float bulletX, bulletY, bulletRotation, bulletScale;
 }
 
 [Serializable]
@@ -217,6 +226,15 @@ public class GameplayNet : MonoBehaviour
         float r = localAvatar.rotation.eulerAngles.z;
         float s = localAvatar.localScale.x;
 
+        //Vector3 bulletPos = localAvatar.GetComponent<PlayerController>().bulletPrefab.transform.position;
+
+
+        //List<BulletState> bullets = new List<BulletState>();
+        
+        //bullets.Add(localAvatar.GetComponent<PlayerController>().bulletSpeed)
+
+            //hacer la misma estructura de bullets en el player
+
         var ps = new PlayerState
         {
             id = SessionConfig.ClientId,
@@ -226,7 +244,9 @@ public class GameplayNet : MonoBehaviour
             rotation = r,
             scale = s,
             damaged = localAvatar.GetComponent<PlayerController>().haveDamage,
-            dead = localDead
+            dead = localDead,
+            //bullets = bullets,
+
         };
 
         last[ps.id] = ps;
@@ -276,6 +296,12 @@ public class GameplayNet : MonoBehaviour
                 }
             }
 
+            foreach(BulletState b in ps.bullets)
+            {
+
+            }
+
+
             if (ps.dead)
             {
                 SpriteRenderer r = t.GetComponentInChildren<SpriteRenderer>();
@@ -289,6 +315,7 @@ public class GameplayNet : MonoBehaviour
                 t.rotation = Quaternion.Euler(0f, 0f, ps.rotation);
                 t.localScale = new Vector3(ps.scale, ps.scale, ps.scale);
                 t.GetComponent<PlayerController>().SetHealth(ps.damaged);
+
             }
 
             if (SessionConfig.IsHost) TryEndMatch();

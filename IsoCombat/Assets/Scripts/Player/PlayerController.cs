@@ -53,6 +53,14 @@ public class PlayerController : MonoBehaviour
 
     public float haveDamage = 0;
 
+    //Shooting
+
+    public GameObject bulletPrefab;
+    public float bulletSpeed;
+    public float shootCooldown = 2f;
+
+    private bool canShoot = true;
+
 
     // Start is called before the first frame update
     void Start()
@@ -73,6 +81,12 @@ public class PlayerController : MonoBehaviour
         {
             if (Input.GetMouseButton(0) && canDash && !isDashing)
                 StartCoroutine(Dash());
+
+            if (Input.GetMouseButton(1) && canShoot)
+            {
+                print("shoot");
+                ShootBullet();
+            }
         }
 
         UpdateTime();
@@ -237,6 +251,27 @@ public class PlayerController : MonoBehaviour
     {
         currentHealth -= damage;
         currentHealth = Mathf.Max(0, currentHealth);
+    }
+
+    public void ShootBullet()
+    {
+        Vector3 offset = transform.up * 0.8f;
+        Vector3 spawnPos = transform.position + offset;
+        Quaternion bulletRotation = transform.rotation * Quaternion.Euler(0, 0, 90);
+
+        canShoot = false;
+        GameObject bullet = Instantiate(bulletPrefab, spawnPos, bulletRotation);
+        Rigidbody2D bulletRb = bullet.GetComponent<Rigidbody2D>();
+        bulletRb.linearVelocity = transform.up * bulletSpeed;
+
+        Destroy(bullet, 5f);
+
+        Invoke(nameof(ResetShoot), shootCooldown);
+    }
+
+    void ResetShoot()
+    {
+        canShoot = true;
     }
 
 

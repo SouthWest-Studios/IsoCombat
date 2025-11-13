@@ -261,6 +261,7 @@ public class GameplayNet : MonoBehaviour
                 {
                     Color nuevoColor = GetColorJugador(ps.id);
                     NetRuntime.colors[ps.id] = nuevoColor;
+                    t.GetComponent<PlayerController>().AssignColor(nuevoColor);
 
                     var allColors = new AllPlayerColorsMsg { players = new List<PlayerColorMsg>() };
                     foreach (var kv in NetRuntime.colors)

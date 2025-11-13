@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -28,8 +29,9 @@ public class PlayerController : MonoBehaviour
     //Movement
     public Camera mainCamera;
     private Vector2 targetPosition;
-    private float screenMargin = 0.5f;
+   
     public float rotationSpeed;
+    private float screenMargin = 0.5f;
 
     //Dash
     public float dashMultiplier = 2f;
@@ -63,6 +65,11 @@ public class PlayerController : MonoBehaviour
     private bool canShoot = true;
 
 
+    private Transform worldMin;
+    private Transform worldMax;
+
+
+
     // Start is called before the first frame update
     void Start()
     {
@@ -75,6 +82,12 @@ public class PlayerController : MonoBehaviour
         playerSprite.GetComponent<SpriteRenderer>().material.SetFloat("_FillAmount", currentHealth / stats.Get(StatId.MaxHP));
 
         StartCoroutine(RegenRoutine());
+
+
+
+        worldMin = WorldControler.I.worldMin;
+        worldMax = WorldControler.I.worldMax;
+
     }
 
     // Update is called once per frame
@@ -193,14 +206,10 @@ public class PlayerController : MonoBehaviour
         Vector2 forward = transform.up; 
         Vector2 newPosition = currentPosition + forward * stats.Get(StatId.MoveSpeed) * Time.deltaTime;
 
-
-        float camHeight = mainCamera.orthographicSize;
-        float camWidth = camHeight * mainCamera.aspect;
-
-        float minX = mainCamera.transform.position.x - camWidth + screenMargin;
-        float maxX = mainCamera.transform.position.x + camWidth - screenMargin;
-        float minY = mainCamera.transform.position.y - camHeight + screenMargin;
-        float maxY = mainCamera.transform.position.y + camHeight - screenMargin;
+        float minX = worldMin.position.x + screenMargin;
+        float maxX = worldMax.position.x - screenMargin;
+        float maxY = worldMin.position.y - screenMargin;
+        float minY = worldMax.position.y + screenMargin;
 
         newPosition.x = Mathf.Clamp(newPosition.x, minX, maxX);
         newPosition.y = Mathf.Clamp(newPosition.y, minY, maxY);

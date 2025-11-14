@@ -1,6 +1,7 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections.Generic;
 
 public class Lobby : MonoBehaviour
 {
@@ -11,6 +12,9 @@ public class Lobby : MonoBehaviour
     public TMP_InputField serverInput;
     public Button playButton;
 
+    public float maxChatHeight = 270f;
+    List<string> _chatMessages = new List<string>();
+
     INetwork _net;
     System.Action<string> _externalSystemHandler;
 
@@ -20,7 +24,7 @@ public class Lobby : MonoBehaviour
         _externalSystemHandler = onSystem;
         _net.OnLog += AppendLog;
         _net.OnSystemMessage += s => { Append(systemText, s); _externalSystemHandler?.Invoke(s); };
-        _net.OnChatMessage += s => Append(chatText, s);
+        _net.OnChatMessage += AppendChat;
 
         if (playButton) playButton.gameObject.SetActive(_net.IsServer);
     }
@@ -44,4 +48,21 @@ public class Lobby : MonoBehaviour
     void Update() { _net?.Tick(); }
     void AppendLog(string s) => Append(logText, s);
     void Append(TextMeshProUGUI text, string s) { if (text == null) return; text.text += s + "\n"; }
+    void AppendChat(string s) { if (chatText == null || string.IsNullOrEmpty(s)) return; _chatMessages.Add(s); RebuildChatText(); }
+
+    void RebuildChatText()
+    {
+        if (chatText == null) return;
+        chatText.text = string.Join("\n", _chatMessages);
+        chatText.ForceMeshUpdate();
+        float limit = maxChatHeight > 0f ? maxChatHeight : chatText.rectTransform.rect.height;
+
+        while (_chatMessages.Count > 0 && chatText.preferredHeight > limit)
+        {
+            _chatMessages.RemoveAt(0);
+            chatText.text = string.Join("\n", _chatMessages);
+            chatText.ForceMeshUpdate();
+        }
+    }
 }
+

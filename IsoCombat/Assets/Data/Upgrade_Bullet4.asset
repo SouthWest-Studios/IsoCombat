@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Upgrade_Bullet4
   m_EditorClassIdentifier: 
   title: Bullet
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: be8a23bd91ecc614c8b31ccd82eb0049, type: 3}
   starsRarity: 4
   entries:
   - id: 6

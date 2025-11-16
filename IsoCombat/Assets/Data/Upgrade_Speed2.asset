@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Upgrade_Speed2
   m_EditorClassIdentifier: 
   title: Speed
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 76418b274e65e0d47be2c09c17c55540, type: 3}
   starsRarity: 2
   entries:
   - id: 1

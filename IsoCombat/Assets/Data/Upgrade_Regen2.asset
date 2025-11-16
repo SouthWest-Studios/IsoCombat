@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 82625db19a0e1084e82b72e66f8b4a14, type: 3}
   m_Name: Upgrade_Regen2
   m_EditorClassIdentifier: 
-  title: Regen+
-  icon: {fileID: 0}
+  title: Health Regeneration
+  icon: {fileID: 21300000, guid: 1458dd827e7c7f540b09cabc7f8b32aa, type: 3}
   starsRarity: 2
   entries:
   - id: 4

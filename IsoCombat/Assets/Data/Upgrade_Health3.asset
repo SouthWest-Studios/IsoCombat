@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Upgrade_Health3
   m_EditorClassIdentifier: 
   title: Health Points
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 1458dd827e7c7f540b09cabc7f8b32aa, type: 3}
   starsRarity: 3
   entries:
   - id: 0

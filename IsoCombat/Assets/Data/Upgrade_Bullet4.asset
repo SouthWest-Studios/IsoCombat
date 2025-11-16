@@ -10,11 +10,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 82625db19a0e1084e82b72e66f8b4a14, type: 3}
-  m_Name: Upgrade_size--
+  m_Name: Upgrade_Bullet4
   m_EditorClassIdentifier: 
-  title: Size--
-  starsRarity: 2
+  title: Bullet
+  icon: {fileID: 0}
+  starsRarity: 4
   entries:
-  - id: 2
+  - id: 6
     op: 0
-    value: -0.5
+    value: 1.3
+  - id: 7
+    op: 0
+    value: -0.8

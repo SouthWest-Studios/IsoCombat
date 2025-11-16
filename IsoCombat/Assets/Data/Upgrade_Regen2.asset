@@ -10,11 +10,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 82625db19a0e1084e82b72e66f8b4a14, type: 3}
-  m_Name: Upgrade_size++
+  m_Name: Upgrade_Regen2
   m_EditorClassIdentifier: 
-  title: Size++
+  title: Regen+
+  icon: {fileID: 0}
   starsRarity: 2
   entries:
-  - id: 2
+  - id: 4
     op: 0
-    value: 0.5
+    value: 0.4
+  - id: 5
+    op: 0
+    value: 1

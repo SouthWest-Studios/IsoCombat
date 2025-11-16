@@ -80,7 +80,9 @@ public class PlayerController : MonoBehaviour
         timeCounter = 0;
         currentHealth = stats.Get(StatId.MaxHP);
         float scale = stats.Get(StatId.Scale);
-        transform.localScale = new Vector3(scale, scale, scale);
+        bulletSpeed = stats.Get(StatId.BulletSpeed);
+        shootCooldown = stats.Get(StatId.BulletRate);
+    transform.localScale = new Vector3(scale, scale, scale);
         playerSprite.GetComponent<SpriteRenderer>().material.SetFloat("_FillAmount", currentHealth / stats.Get(StatId.MaxHP));
 
         StartCoroutine(RegenRoutine());

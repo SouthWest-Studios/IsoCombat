@@ -10,12 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 82625db19a0e1084e82b72e66f8b4a14, type: 3}
-  m_Name: Upgrade_Regen+
+  m_Name: Upgrade_Dash4
   m_EditorClassIdentifier: 
-  title: Regen+
+  title: Dash Fatigue
   icon: {fileID: 0}
-  starsRarity: 3
+  starsRarity: 4
   entries:
-  - id: 4
+  - id: 3
     op: 0
-    value: 0.4
+    value: -0.4

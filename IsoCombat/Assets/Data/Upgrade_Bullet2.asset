@@ -10,11 +10,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 82625db19a0e1084e82b72e66f8b4a14, type: 3}
-  m_Name: Upgrade_Health++
+  m_Name: Upgrade_Bullet2
   m_EditorClassIdentifier: 
-  title: Health++
+  title: Bullet
+  icon: {fileID: 0}
   starsRarity: 2
   entries:
-  - id: 0
+  - id: 6
     op: 0
-    value: 2
+    value: 0.5
+  - id: 7
+    op: 0
+    value: -0.25

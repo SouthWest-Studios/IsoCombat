@@ -10,11 +10,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 82625db19a0e1084e82b72e66f8b4a14, type: 3}
-  m_Name: Upgrade_Speed+
+  m_Name: Upgrade_Bullet1
   m_EditorClassIdentifier: 
-  title: Speed+
+  title: Bullet
+  icon: {fileID: 0}
   starsRarity: 1
   entries:
-  - id: 1
+  - id: 6
     op: 0
-    value: 0.5
+    value: 0.3
+  - id: 7
+    op: 0
+    value: -0.1

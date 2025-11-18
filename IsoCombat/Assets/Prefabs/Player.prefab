@@ -432,7 +432,7 @@ GameObject:
   - component: {fileID: 2564564975571245392}
   m_Layer: 0
   m_Name: Player
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -486,6 +486,7 @@ MonoBehaviour:
   shootCooldown: 2
   bullets: []
   isInvisble: 0
+  OriColor: {r: 0, g: 0, b: 0, a: 0}
 --- !u!114 &6170691144422582515
 MonoBehaviour:
   m_ObjectHideFlags: 0

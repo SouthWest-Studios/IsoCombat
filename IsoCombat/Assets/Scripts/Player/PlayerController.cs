@@ -339,9 +339,8 @@ public class PlayerController : MonoBehaviour
         while (isPlayerLocal && !isDead)
         {
             Debug.Log("currentHealth" + stats.Get(StatId.MaxHP));
-
+            yield return new WaitForSeconds(stats.Get(StatId.RegenSpeed));
             if (currentHealth < stats.Get(StatId.MaxHP)) {
-                yield return new WaitForSeconds(stats.Get(StatId.RegenSpeed));
                 currentHealth += stats.Get(StatId.Regen);
                 haveDamage -= stats.Get(StatId.Regen);
             }

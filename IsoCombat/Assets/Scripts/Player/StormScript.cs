@@ -1,6 +1,7 @@
-using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine;
+using static PlayerColliderPart;
 public class StormScript : MonoBehaviour
 {
 
@@ -21,6 +22,10 @@ public class StormScript : MonoBehaviour
     {
         if (!other.transform.parent.parent.CompareTag("Player") && other.transform.parent.parent.GetComponent<PlayerController>().isPlayerLocal) return;
 
+        var otherPart = other.GetComponent<PlayerColliderPart>();
+
+       if( otherPart.partType == PartType.Upper) return;
+
         if (damageRoutine != null)
         {
             StopCoroutine(damageRoutine);
@@ -30,7 +35,10 @@ public class StormScript : MonoBehaviour
 
     void OnTriggerExit2D(Collider2D other)
     {
+        
         if (!other.transform.parent.parent.CompareTag("Player") && other.transform.parent.parent.GetComponent<PlayerController>().isPlayerLocal) return;
+        var otherPart = other.GetComponent<PlayerColliderPart>();
+        if (otherPart.partType == PartType.Upper) return;
         damageRoutine = StartCoroutine(ApplyDamage(other.transform.parent.parent.GetComponent<PlayerController>()));
     }
 
@@ -38,6 +46,7 @@ public class StormScript : MonoBehaviour
     {
         while (true)
         {
+            Debug.Log("recbio dañooooo");
             player.TakeDamage(1);
             yield return new WaitForSeconds(2f);
         }

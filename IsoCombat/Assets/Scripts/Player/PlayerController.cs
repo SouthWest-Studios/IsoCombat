@@ -25,11 +25,11 @@ public class PlayerController : MonoBehaviour
     public bool isPlayerLocal = false;
     public bool isDead = false;
     public bool canMove = true;
-    
+
     //Movement
     public Camera mainCamera;
     private Vector2 targetPosition;
-   
+
     public float rotationSpeed;
     private float screenMargin = 0.5f;
 
@@ -82,11 +82,11 @@ public class PlayerController : MonoBehaviour
         float scale = stats.Get(StatId.Scale);
         bulletSpeed = stats.Get(StatId.BulletSpeed);
         shootCooldown = stats.Get(StatId.BulletRate);
-    transform.localScale = new Vector3(scale, scale, scale);
+        transform.localScale = new Vector3(scale, scale, scale);
         playerSprite.GetComponent<SpriteRenderer>().material.SetFloat("_FillAmount", currentHealth / stats.Get(StatId.MaxHP));
 
-        StartCoroutine(RegenRoutine());
 
+        StartCoroutine(RegenRoutine());
 
 
         worldMin = WorldControler.I.worldMin;
@@ -124,7 +124,7 @@ public class PlayerController : MonoBehaviour
             {
                 UpdateMovement();
             }
-            
+
 
             if (Input.GetKeyDown(KeyCode.K))
             {
@@ -133,7 +133,7 @@ public class PlayerController : MonoBehaviour
 
         }
 
-
+        UpdateTime();
         UpdateInvulnerability();
 
 
@@ -209,7 +209,7 @@ public class PlayerController : MonoBehaviour
             );
         }
 
-        Vector2 forward = transform.up; 
+        Vector2 forward = transform.up;
         Vector2 newPosition = currentPosition + forward * stats.Get(StatId.MoveSpeed) * Time.deltaTime;
 
         float minX = worldMin.position.x + screenMargin;
@@ -241,6 +241,14 @@ public class PlayerController : MonoBehaviour
     void UpdateTime()
     {
         timeCounter += Time.deltaTime;
+
+
+     
+        //if (timeCounter >= stats.Get(StatId.RegenSpeed))
+        //{
+        //    RegenRoutine();
+        //    timeCounter = 0f;
+        //}
         //if (timeCounter >= PlayerRuntimeStats.instance.realTimeStats.currentMaxTime && !dieDoned) {
         //    dieDoned = true;
         //    PlayerDie();
@@ -327,10 +335,20 @@ public class PlayerController : MonoBehaviour
     }
     IEnumerator RegenRoutine()
     {
+        Debug.Log(timeCounter);
         while (isPlayerLocal && !isDead)
         {
-            yield return new WaitForSeconds(stats.Get(StatId.RegenSpeed));
-            currentHealth += stats.Get(StatId.Regen);
+            Debug.Log("currentHealth" + stats.Get(StatId.MaxHP));
+
+            if (currentHealth < stats.Get(StatId.MaxHP)) {
+                yield return new WaitForSeconds(stats.Get(StatId.RegenSpeed));
+                currentHealth += stats.Get(StatId.Regen);
+                haveDamage -= stats.Get(StatId.Regen);
+            }
+            else
+            {
+                currentHealth = stats.Get(StatId.MaxHP);
+            }
         }
     }
 

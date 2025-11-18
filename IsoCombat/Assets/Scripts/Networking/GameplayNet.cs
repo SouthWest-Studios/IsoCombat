@@ -12,6 +12,7 @@ public struct PlayerState
     public float x, y, rotation, scale;
     public float damaged;
     public bool dead;
+    public bool isInvisible;
     public List<BulletState> bullets;
     
 }
@@ -220,7 +221,7 @@ public class GameplayNet : MonoBehaviour
                 bulletY = bulletRB.transform.position.y
             });
         }
-        
+
         //PlayerStats
         var ps = new PlayerState
         {
@@ -233,6 +234,7 @@ public class GameplayNet : MonoBehaviour
             damaged = pcLocal.haveDamage,
             dead = localDead,
             bullets = bullets,
+            isInvisible = pcLocal.isInvisble,
         };
 
         last[ps.id] = ps;
@@ -287,6 +289,17 @@ public class GameplayNet : MonoBehaviour
                 t.rotation = Quaternion.Euler(0f, 0f, ps.rotation);
                 t.localScale = new Vector3(ps.scale, ps.scale, ps.scale);
                 t.GetComponent<PlayerController>().SetHealth(ps.damaged);
+                if (ps.isInvisible) {
+                    //Hacerlo invisible
+                    SpriteRenderer r = t.GetComponentInChildren<SpriteRenderer>();
+                    if (r) r.enabled = false;
+                }
+                else
+                {
+                    //Hacerlo visible
+                    SpriteRenderer r = t.GetComponentInChildren<SpriteRenderer>();
+                    if (r) r.enabled = true;
+                }
 
             }
 

@@ -484,6 +484,8 @@ MonoBehaviour:
   bulletPrefab: {fileID: 4739321548757923663, guid: 3454fcc4133ba59438adbcb33b936171, type: 3}
   bulletSpeed: 5
   shootCooldown: 2
+  bullets: []
+  isInvisble: 0
 --- !u!114 &6170691144422582515
 MonoBehaviour:
   m_ObjectHideFlags: 0

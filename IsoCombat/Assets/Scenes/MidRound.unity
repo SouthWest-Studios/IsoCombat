@@ -211,6 +211,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 576f4cc9c8a406741bbf831f0d01a0b2, type: 2}
   - {fileID: 11400000, guid: ec87d27002c90ae41a59dfe47ad717d1, type: 2}
   - {fileID: 11400000, guid: 6eb77745642265746ad7394c0fb46196, type: 2}
+  - {fileID: 11400000, guid: 95d27f8c2d3b7b64494edfe3684ff95b, type: 2}
   choices:
   - {fileID: 366632695}
   - {fileID: 1554387535}

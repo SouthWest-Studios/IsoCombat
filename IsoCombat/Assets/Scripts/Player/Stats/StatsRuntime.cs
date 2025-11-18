@@ -30,6 +30,8 @@ public class StatsRuntime : MonoBehaviour
         finalValues[StatId.RegenSpeed] = baseStats.Get(StatId.RegenSpeed);
         finalValues[StatId.BulletSpeed] = baseStats.Get(StatId.BulletSpeed);
         finalValues[StatId.BulletRate] = baseStats.Get(StatId.BulletRate);
+        finalValues[StatId.InvisSpeed] = baseStats.Get(StatId.InvisSpeed);
+        finalValues[StatId.InvisCount] = baseStats.Get(StatId.InvisCount);
 
         foreach (var m in mods) if (m.op == ModOp.Add) finalValues[m.id] += m.value;
         foreach (var m in mods) if (m.op == ModOp.Mul) finalValues[m.id] *= (1f + m.value);

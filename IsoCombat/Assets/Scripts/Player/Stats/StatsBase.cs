@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public enum StatId { MaxHP, MoveSpeed, Scale, Stun, Regen, RegenSpeed, BulletSpeed, BulletRate }
+public enum StatId { MaxHP, MoveSpeed, Scale, Stun, Regen, RegenSpeed, BulletSpeed, BulletRate, InvisSpeed, InvisCount}
 public enum ModOp { Add, Mul, Override }
 
 [CreateAssetMenu(menuName = "Stats/Base")]
@@ -14,6 +14,8 @@ public class StatsBase : ScriptableObject
     public float regenSpeed = 3f;
     public float bulletSpeed = 5f;
     public float bulletRate = 2f;
+    public float InvisSpeed = 1f;
+    public float InvisCount = 5f;
 
     public float Get(StatId id) => id switch
     {
@@ -25,6 +27,8 @@ public class StatsBase : ScriptableObject
         StatId.RegenSpeed => regenSpeed,
         StatId.BulletSpeed => bulletSpeed,
         StatId.BulletRate => bulletRate,
+        StatId.InvisSpeed => InvisSpeed,
+        StatId.InvisCount => InvisCount,
         _ => 0f
         
     };

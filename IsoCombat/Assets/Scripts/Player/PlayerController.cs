@@ -70,7 +70,9 @@ public class PlayerController : MonoBehaviour
     private Transform worldMin;
     private Transform worldMax;
 
-
+    //Invisible 
+    public bool isInvisble = false;
+    public Color OriColor;
 
     // Start is called before the first frame update
     void Start()
@@ -84,9 +86,10 @@ public class PlayerController : MonoBehaviour
         shootCooldown = stats.Get(StatId.BulletRate);
         transform.localScale = new Vector3(scale, scale, scale);
         playerSprite.GetComponent<SpriteRenderer>().material.SetFloat("_FillAmount", currentHealth / stats.Get(StatId.MaxHP));
-
+        OriColor = this.GetComponentInChildren<SpriteRenderer>().color;
 
         StartCoroutine(RegenRoutine());
+        StartCoroutine(Invisible());
 
 
         worldMin = WorldControler.I.worldMin;
@@ -335,7 +338,7 @@ public class PlayerController : MonoBehaviour
     }
     IEnumerator RegenRoutine()
     {
-        Debug.Log(timeCounter);
+        
         while (isPlayerLocal && !isDead)
         {
             Debug.Log("currentHealth" + stats.Get(StatId.MaxHP));
@@ -348,6 +351,23 @@ public class PlayerController : MonoBehaviour
             {
                 currentHealth = stats.Get(StatId.MaxHP);
             }
+        }
+    }
+
+    IEnumerator Invisible() {
+       
+        while (isPlayerLocal && !isDead)
+        {
+            OriColor.a = 0.3f;
+            Debug.Log("Invisible"+ OriColor);
+            isInvisble = true;
+            this.GetComponentInChildren<SpriteRenderer>().color = OriColor;
+            yield return new WaitForSeconds(stats.Get(StatId.InvisSpeed));
+            Debug.Log("No Invisible");
+            isInvisble = false;
+            OriColor.a = 1f;
+            this.GetComponentInChildren<SpriteRenderer>().color = OriColor;
+            yield return new WaitForSeconds(stats.Get(StatId.InvisCount));
         }
     }
 

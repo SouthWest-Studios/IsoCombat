@@ -29,12 +29,12 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _CenterX: 0.5
-    - _CenterY: 0.49880096
-    - _GlitchIntensity: 0.59793395
-    - _NoiseScale: 11.123431
+    - _CenterX: 0.49948078
+    - _CenterY: 0.49948078
+    - _GlitchIntensity: 0.49299434
+    - _NoiseScale: 10.003073
     - _Radius: -0.5
-    - _ScanLines: 142.0961
+    - _ScanLines: 150.46725
     m_Colors:
     - _Color: {r: 0.254717, g: 0.254717, b: 0.254717, a: 1}
   m_BuildTextureStacks: []

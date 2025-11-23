@@ -29,8 +29,8 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _CenterX: 0.49948505
-    - _CenterY: 0.5
+    - _CenterX: 0.5
+    - _CenterY: 0.4375
     - _GlitchIntensity: 0.1
     - _NoiseScale: 10
     - _Radius: 1

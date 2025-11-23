@@ -73,6 +73,8 @@ public class PlayerController : MonoBehaviour
     //Invisible 
     public bool isInvisble = false;
 
+    private Rigidbody2D rb;
+
 
     // Start is called before the first frame update
     void Start()
@@ -87,6 +89,7 @@ public class PlayerController : MonoBehaviour
         transform.localScale = new Vector3(scale, scale, scale);
         playerSprite.GetComponent<SpriteRenderer>().material.SetFloat("_FillAmount", currentHealth / stats.Get(StatId.MaxHP));
 
+        rb = GetComponent<Rigidbody2D>();
 
         StartCoroutine(RegenRoutine());
         StartCoroutine(Invisible());
@@ -102,6 +105,10 @@ public class PlayerController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+
+        Debug.Log(rb.linearVelocity);
+
+
         if (isPlayerLocal && !isDead)
         {
             if (Input.GetMouseButton(0) && canDash && !isDashing)
@@ -109,7 +116,6 @@ public class PlayerController : MonoBehaviour
 
             if (Input.GetMouseButton(1) && canShoot)
             {
-                print("shoot");
                 ShootBullet();
             }
         }
@@ -118,6 +124,7 @@ public class PlayerController : MonoBehaviour
 
         if (isPlayerLocal)
         {
+           
             if (Input.GetKeyDown(KeyCode.R))
             {
                 PlayerDie();
@@ -125,6 +132,7 @@ public class PlayerController : MonoBehaviour
 
             if (canMove)
             {
+                rb.linearVelocity = Vector2.zero;
                 UpdateMovement();
             }
 
@@ -341,7 +349,6 @@ public class PlayerController : MonoBehaviour
         
         while (isPlayerLocal && !isDead)
         {
-            Debug.Log("currentHealth" + stats.Get(StatId.MaxHP));
             yield return new WaitForSeconds(stats.Get(StatId.RegenSpeed));
             if (currentHealth < stats.Get(StatId.MaxHP)) {
                 currentHealth += stats.Get(StatId.Regen);
@@ -364,7 +371,6 @@ public class PlayerController : MonoBehaviour
             isInvisble = true;
             this.GetComponentInChildren<SpriteRenderer>().color = OriColor;
             yield return new WaitForSeconds(stats.Get(StatId.InvisSpeed));
-            Debug.Log("No Invisible");
             isInvisble = false;
             OriColor.a = 1f;
             this.GetComponentInChildren<SpriteRenderer>().color = OriColor;

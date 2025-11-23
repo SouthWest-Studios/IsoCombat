@@ -31,10 +31,10 @@ Material:
     m_Floats:
     - _CenterX: 0.5
     - _CenterY: 0.5
-    - _GlitchIntensity: 0.1
-    - _NoiseScale: 10
-    - _Radius: 1
-    - _ScanLines: 100
+    - _GlitchIntensity: 0.49436703
+    - _NoiseScale: 19.998014
+    - _Radius: -0.5
+    - _ScanLines: 158.46632
     m_Colors:
     - _Color: {r: 0.254717, g: 0.254717, b: 0.254717, a: 1}
   m_BuildTextureStacks: []

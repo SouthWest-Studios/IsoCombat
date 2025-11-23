@@ -13,7 +13,8 @@ public struct PlayerState
     public bool dead;
     public bool isInvisible;
     public List<BulletState> bullets;
-    
+    public List<SpikeState> spikes;
+
 }
 
 [Serializable]
@@ -90,6 +91,7 @@ public class GameplayNet : MonoBehaviour
     readonly Dictionary<string, Transform> avatars = new();
     readonly Dictionary<string, PlayerState> last = new();
     readonly Dictionary<string, Dictionary<string, Rigidbody2D>> remoteBullets = new();
+    readonly Dictionary<string, Rigidbody2D> spikes = new();
     Transform localAvatar;
     PlayerController pcLocal;
     float sendTimer;
@@ -241,6 +243,30 @@ public class GameplayNet : MonoBehaviour
             });
         }
 
+        //BallSpikes
+        List<SpikeState> spikeStates = null;
+        if (SessionConfig.IsHost)
+        {
+            spikeStates = new List<SpikeState>();
+            foreach (var kv in spikes)
+            {
+                var rb = kv.Value;
+                if (rb == null) continue;
+
+                spikeStates.Add(new SpikeState
+                {
+                    id = kv.Key,
+                    spikeX = rb.position.x,
+                    spikeY = rb.position.y,
+                    spikeVelX = rb.linearVelocity.x,
+                    spikeVelY = rb.linearVelocity.y,
+                    spikeRotation = rb.rotation,
+                    spikeAngularVel = rb.angularVelocity
+                });
+            }
+        }
+
+
         //PlayerStats
         var ps = new PlayerState
         {
@@ -252,8 +278,9 @@ public class GameplayNet : MonoBehaviour
             scale = s,
             damaged = pcLocal.haveDamage,
             dead = localDead,
-            bullets = bullets,
             isInvisible = pcLocal.isInvisble,
+            bullets = bullets,
+            spikes = spikeStates,
         };
 
         last[ps.id] = ps;
@@ -306,6 +333,12 @@ public class GameplayNet : MonoBehaviour
 
             //Bullets
             SyncRemoteBullets(ps.id, ps.bullets);
+
+            //Spikes
+            if (!SessionConfig.IsHost && ps.spikes != null && ps.spikes.Count > 0)
+            {
+                SyncSpikes(ps.spikes);
+            }
 
 
             if (ps.dead)
@@ -551,31 +584,33 @@ public class GameplayNet : MonoBehaviour
             return;
         }
 
-        var go = Instantiate(spikePrefab);
-        var rb = go.GetComponent<Rigidbody2D>();
-
-        go.transform.position = new Vector3(s.spikeX, s.spikeY, 0f);
-        go.transform.rotation = Quaternion.Euler(0f, 0f, s.spikeRotation);
-
-        if (rb != null)
+        if (!spikes.TryGetValue(s.id, out var rb) || rb == null)
         {
-            rb.linearVelocity = new Vector2(s.spikeVelX, s.spikeVelY);
-            rb.angularVelocity = s.spikeAngularVel;
+            var go = Instantiate(spikePrefab);
+            go.name = "SPIKE_" + s.id;
+            rb = go.GetComponent<Rigidbody2D>();
+
+            rb.bodyType = SessionConfig.IsHost ? RigidbodyType2D.Dynamic : RigidbodyType2D.Kinematic;
+
+            spikes[s.id] = rb;
         }
+
+        rb.transform.position = new Vector3(s.spikeX, s.spikeY, 0f);
+        rb.transform.rotation = Quaternion.Euler(0f, 0f, s.spikeRotation);
+        rb.linearVelocity = new Vector2(s.spikeVelX, s.spikeVelY);
+        rb.angularVelocity = s.spikeAngularVel;
     }
 
     SpikeState ServerSpawnSpikeForPlayer(PlayerState ps)
     {
-        // Posición: la del jugador al morir
         Vector2 pos = new Vector2(ps.x, ps.y);
 
-        // Dirección aleatoria para salir disparado
         Vector2 dir = UnityEngine.Random.insideUnitCircle.normalized;
         if (dir.sqrMagnitude < 0.0001f)
             dir = Vector2.up;
 
-        float speed = 8f;          // ajusta a tu gusto
-        float angVel = 360f * (UnityEngine.Random.value < 0.5f ? -1f : 1f); // grados/seg
+        float speed = 8f;          
+        float angVel = 360f * (UnityEngine.Random.value < 0.5f ? -1f : 1f);
 
         SpikeState spike = new SpikeState
         {
@@ -587,8 +622,41 @@ public class GameplayNet : MonoBehaviour
             spikeAngularVel = angVel,
             spikeRotation = ps.rotation
         };
-
-        net.SendMessage(NetOperation.SPAWN_SPIKE, JsonUtility.ToJson(spike));
         return spike;
+    }
+
+    void SyncSpikes(List<SpikeState> list)
+    {
+        var idsRecibidos = new HashSet<string>();
+        list = list ?? new List<SpikeState>();
+
+        foreach (var s in list)
+        {
+            idsRecibidos.Add(s.id);
+
+            if (!spikes.TryGetValue(s.id, out var rb) || rb == null)
+            {
+                var go = Instantiate(spikePrefab);
+                rb = go.GetComponent<Rigidbody2D>();
+                rb.bodyType = RigidbodyType2D.Kinematic;
+                spikes[s.id] = rb;
+            }
+
+            rb.transform.position = new Vector3(s.spikeX, s.spikeY, 0f);
+            rb.transform.rotation = Quaternion.Euler(0f, 0f, s.spikeRotation);
+            rb.linearVelocity = new Vector2(s.spikeVelX, s.spikeVelY);
+            rb.angularVelocity = s.spikeAngularVel;
+        }
+
+        var idsLocales = new List<string>(spikes.Keys);
+        foreach (var id in idsLocales)
+        {
+            if (!idsRecibidos.Contains(id))
+            {
+                var rb = spikes[id];
+                if (rb != null) Destroy(rb.gameObject);
+                spikes.Remove(id);
+            }
+        }
     }
 }

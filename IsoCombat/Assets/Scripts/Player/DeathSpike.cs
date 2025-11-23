@@ -14,11 +14,12 @@ public class DeathSpike : MonoBehaviour
 
     void OnCollisionEnter2D(Collision2D collision)
     {
+
+
+        if (!SessionConfig.IsHost) return;
         Vector2 dir = (rb.position - collision.GetContact(0).point).normalized;
-
         rb.AddForce(dir * knockbackForce, ForceMode2D.Impulse);
-
-        float cross = Vector3.Cross(dir, Vector2.up).z; // >0 o <0 según el lado
+        float cross = Vector3.Cross(dir, Vector2.up).z;
         float sign = Mathf.Sign(cross);
         if (sign == 0) sign = 1f;
         rb.AddTorque(sign * torqueForce, ForceMode2D.Impulse);

@@ -18,7 +18,13 @@ public class PlayerColliderPart : MonoBehaviour
 
     void OnCollisionEnter2D(Collision2D collision)
     {
+        if (owner == null) { owner = GetComponentInParent<PlayerController>(); }
         if (!owner.isPlayerLocal) return;
+
+        if (collision.gameObject.CompareTag("Spike"))
+        {
+            owner.TakeDamage(3);
+        }
 
         if (collision.gameObject.CompareTag("Bullet"))
         {

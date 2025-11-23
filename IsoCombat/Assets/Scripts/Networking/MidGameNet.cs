@@ -99,7 +99,6 @@ public class MidGameNet : MonoBehaviour
                 if (rp.lastWinner == SessionConfig.ClientId + "_" + SessionConfig.PlayerName) {
                     MidGameUI.I.DesactivarMejoras();
                 }
-                Debug.Log("Last winner: " + rp.lastWinner + " my name: " + SessionConfig.ClientId + "_" + SessionConfig.PlayerName);
                 Render(LocalSnapshot());
                 break;
 

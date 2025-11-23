@@ -100,7 +100,7 @@ GameObject:
   - component: {fileID: 8709720714559445690}
   m_Layer: 0
   m_Name: LowerCollision
-  m_TagString: Untagged
+  m_TagString: PlayerCollision
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -194,7 +194,7 @@ GameObject:
   - component: {fileID: 6370452440087965787}
   m_Layer: 0
   m_Name: UpperCollision
-  m_TagString: Untagged
+  m_TagString: PlayerCollision
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -386,7 +386,7 @@ SpriteRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 9dfc825aed78fcd4ba02077103263b40, type: 2}
+  - {fileID: 2100000, guid: 657c4f4579f678241b5c8d82c3756892, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -486,7 +486,6 @@ MonoBehaviour:
   shootCooldown: 2
   bullets: []
   isInvisble: 0
-  OriColor: {r: 0, g: 0, b: 0, a: 0}
 --- !u!114 &6170691144422582515
 MonoBehaviour:
   m_ObjectHideFlags: 0

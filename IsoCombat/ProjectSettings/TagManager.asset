@@ -7,11 +7,12 @@ TagManager:
   - Bullet
   - PlayerCollision
   - Spike
+  - WorldWall
   layers:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - 
+  - DontCollideWithWalls
   - Water
   - UI
   - 

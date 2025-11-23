@@ -244,7 +244,7 @@ GameObject:
   - component: {fileID: 109972836}
   m_Layer: 0
   m_Name: U
-  m_TagString: Untagged
+  m_TagString: WorldWall
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -335,7 +335,7 @@ BoxCollider2D:
     m_Bits: 0
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 8
   m_LayerOverridePriority: 0
   m_ForceSendLayers:
     serializedVersion: 2
@@ -918,7 +918,7 @@ GameObject:
   - component: {fileID: 855466583}
   m_Layer: 0
   m_Name: R
-  m_TagString: Untagged
+  m_TagString: WorldWall
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1009,7 +1009,7 @@ BoxCollider2D:
     m_Bits: 0
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 8
   m_LayerOverridePriority: 0
   m_ForceSendLayers:
     serializedVersion: 2
@@ -1603,7 +1603,7 @@ GameObject:
   - component: {fileID: 1308798642}
   m_Layer: 0
   m_Name: L
-  m_TagString: Untagged
+  m_TagString: WorldWall
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1694,7 +1694,7 @@ BoxCollider2D:
     m_Bits: 0
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 8
   m_LayerOverridePriority: 0
   m_ForceSendLayers:
     serializedVersion: 2
@@ -1734,7 +1734,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1338384807}
   m_Layer: 0
-  m_Name: Colisiones
+  m_Name: WallsCollisions
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2108,7 +2108,7 @@ GameObject:
   - component: {fileID: 1767703325}
   m_Layer: 0
   m_Name: D
-  m_TagString: Untagged
+  m_TagString: WorldWall
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -2199,7 +2199,7 @@ BoxCollider2D:
     m_Bits: 0
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 8
   m_LayerOverridePriority: 0
   m_ForceSendLayers:
     serializedVersion: 2

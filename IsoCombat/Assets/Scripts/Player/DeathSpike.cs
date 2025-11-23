@@ -18,7 +18,9 @@ public class DeathSpike : MonoBehaviour
 
         rb.AddForce(dir * knockbackForce, ForceMode2D.Impulse);
 
-        float sign = Random.value < 0.5f ? -1f : 1f;
+        float cross = Vector3.Cross(dir, Vector2.up).z; // >0 o <0 según el lado
+        float sign = Mathf.Sign(cross);
+        if (sign == 0) sign = 1f;
         rb.AddTorque(sign * torqueForce, ForceMode2D.Impulse);
     }
 }

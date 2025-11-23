@@ -100,7 +100,7 @@ GameObject:
   - component: {fileID: 8709720714559445690}
   m_Layer: 0
   m_Name: LowerCollision
-  m_TagString: Untagged
+  m_TagString: PlayerCollision
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -194,7 +194,7 @@ GameObject:
   - component: {fileID: 6370452440087965787}
   m_Layer: 0
   m_Name: UpperCollision
-  m_TagString: Untagged
+  m_TagString: PlayerCollision
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

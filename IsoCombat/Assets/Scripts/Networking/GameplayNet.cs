@@ -1,4 +1,3 @@
-using JetBrains.Annotations;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -21,6 +20,11 @@ public struct PlayerState
 public struct BulletState {
     public string id;
     public float bulletX, bulletY, bulletRotation, bulletScale;
+}
+[Serializable]
+public struct SpikeState {
+    public string id;
+    public float spikeX, spikeY, spikeVelX, spikeVelY, spikeRotation, spikeAngularVel;
 }
 
 [Serializable]
@@ -56,6 +60,7 @@ public class GameplayNet : MonoBehaviour
 
     public GameObject playerPrefab;
     public GameObject bulletPrefab;
+    public GameObject spikePrefab;
     public bool localDead = false;
 
     [SerializeField] private Transform spawn0;
@@ -183,6 +188,20 @@ public class GameplayNet : MonoBehaviour
             if (!localDead && pcLocal.isDead)
             {
                 localDead = true;
+
+                if (SessionConfig.IsHost)
+                {
+                    var ps = last[SessionConfig.ClientId];
+                    ps.x = localAvatar.position.x;
+                    ps.y = localAvatar.position.y;
+                    ps.rotation = localAvatar.rotation.eulerAngles.z;
+                    ps.dead = true;
+                    last[SessionConfig.ClientId] = ps;
+
+                    SpawnSpike(ServerSpawnSpikeForPlayer(ps));
+                }
+
+
                 SendState(true);
                 pcLocal.enabled = false;
                 if (SessionConfig.IsHost) TryEndMatch();
@@ -247,7 +266,20 @@ public class GameplayNet : MonoBehaviour
         if (m.op == NetOperation.STATE)
         {
             PlayerState ps = JsonUtility.FromJson<PlayerState>(m.payload);
+            
+            if (SessionConfig.IsHost)
+            {
+                if (last.TryGetValue(ps.id, out var prev))
+                {
+                    if (!prev.dead && ps.dead)
+                    {
+                        SpawnSpike(ServerSpawnSpikeForPlayer(ps));
+                    }
+                }
+            }
+
             last[ps.id] = ps;
+
             if (ps.id == SessionConfig.ClientId) return;
 
             if (!avatars.TryGetValue(ps.id, out var t) || t == null)
@@ -342,6 +374,13 @@ public class GameplayNet : MonoBehaviour
         {
             var hit = JsonUtility.FromJson<BulletHitMsg>(m.payload);
             HandleBulletHit(hit);
+            return;
+        }
+
+        if (m.op == NetOperation.SPAWN_SPIKE)
+        {
+            var spike = JsonUtility.FromJson<SpikeState>(m.payload);
+            SpawnSpike(spike);
             return;
         }
     }
@@ -502,5 +541,54 @@ public class GameplayNet : MonoBehaviour
 
         string json = JsonUtility.ToJson(msg);
         NetRuntime.Net.SendMessage(NetOperation.BULLET_HIT, json);
+    }
+
+    void SpawnSpike(SpikeState s)
+    {
+        if (spikePrefab == null)
+        {
+            Debug.LogError("[GameplayNet] spikePrefab no asignado");
+            return;
+        }
+
+        var go = Instantiate(spikePrefab);
+        var rb = go.GetComponent<Rigidbody2D>();
+
+        go.transform.position = new Vector3(s.spikeX, s.spikeY, 0f);
+        go.transform.rotation = Quaternion.Euler(0f, 0f, s.spikeRotation);
+
+        if (rb != null)
+        {
+            rb.linearVelocity = new Vector2(s.spikeVelX, s.spikeVelY);
+            rb.angularVelocity = s.spikeAngularVel;
+        }
+    }
+
+    SpikeState ServerSpawnSpikeForPlayer(PlayerState ps)
+    {
+        // Posición: la del jugador al morir
+        Vector2 pos = new Vector2(ps.x, ps.y);
+
+        // Dirección aleatoria para salir disparado
+        Vector2 dir = UnityEngine.Random.insideUnitCircle.normalized;
+        if (dir.sqrMagnitude < 0.0001f)
+            dir = Vector2.up;
+
+        float speed = 8f;          // ajusta a tu gusto
+        float angVel = 360f * (UnityEngine.Random.value < 0.5f ? -1f : 1f); // grados/seg
+
+        SpikeState spike = new SpikeState
+        {
+            id = Guid.NewGuid().ToString(),
+            spikeX = pos.x,
+            spikeY = pos.y,
+            spikeVelX = dir.x * speed,
+            spikeVelY = dir.y * speed,
+            spikeAngularVel = angVel,
+            spikeRotation = ps.rotation
+        };
+
+        net.SendMessage(NetOperation.SPAWN_SPIKE, JsonUtility.ToJson(spike));
+        return spike;
     }
 }

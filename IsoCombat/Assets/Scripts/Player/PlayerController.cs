@@ -106,8 +106,10 @@ public class PlayerController : MonoBehaviour
     void Update()
     {
 
-        Debug.Log(rb.linearVelocity);
-
+        if(rb == null)
+        {
+            rb = GetComponent<Rigidbody2D>(); 
+        }           
 
         if (isPlayerLocal && !isDead)
         {
@@ -365,20 +367,18 @@ public class PlayerController : MonoBehaviour
        
         while (isPlayerLocal && !isDead)
         {
-
-            Color OriColor = NetRuntime.colors[SessionConfig.ClientId];
-            OriColor.a = 0.6f;
-            isInvisble = true;
-            this.GetComponentInChildren<SpriteRenderer>().color = OriColor;
-            yield return new WaitForSeconds(stats.Get(StatId.InvisSpeed));
-            isInvisble = false;
-            OriColor.a = 1f;
-            this.GetComponentInChildren<SpriteRenderer>().color = OriColor;
-            yield return new WaitForSeconds(stats.Get(StatId.InvisCount));
+            if(StatId.InvisSpeed > 0)
+            {
+                Color OriColor = NetRuntime.colors[SessionConfig.ClientId];
+                OriColor.a = 0.6f;
+                isInvisble = true;
+                this.GetComponentInChildren<SpriteRenderer>().color = OriColor;
+                yield return new WaitForSeconds(stats.Get(StatId.InvisSpeed));
+                isInvisble = false;
+                OriColor.a = 1f;
+                this.GetComponentInChildren<SpriteRenderer>().color = OriColor;
+                yield return new WaitForSeconds(stats.Get(StatId.InvisCount));
+            }
         }
     }
-
-
-
-
 }

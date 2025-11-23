@@ -20,7 +20,15 @@ public class StormScript : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D other)
     {
-        if (!other.transform.parent.parent.CompareTag("Player") && other.transform.parent.parent.GetComponent<PlayerController>().isPlayerLocal) return;
+
+        if (other.CompareTag("PlayerCollision"))
+        {
+            if (!other.GetComponent<PlayerColliderPart>().owner) return;
+        }
+        else
+        {
+            return;
+        }
 
         var otherPart = other.GetComponent<PlayerColliderPart>();
 
@@ -35,8 +43,8 @@ public class StormScript : MonoBehaviour
 
     void OnTriggerExit2D(Collider2D other)
     {
-        
-        if (!other.transform.parent.parent.CompareTag("Player") && other.transform.parent.parent.GetComponent<PlayerController>().isPlayerLocal) return;
+
+        if (!other.CompareTag("PlayerCollision") || !other.GetComponent<PlayerColliderPart>().owner.isPlayerLocal) return;
         var otherPart = other.GetComponent<PlayerColliderPart>();
         if (otherPart.partType == PartType.Upper) return;
         damageRoutine = StartCoroutine(ApplyDamage(other.transform.parent.parent.GetComponent<PlayerController>()));

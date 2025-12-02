@@ -772,6 +772,11 @@ MonoBehaviour:
   spawn1: {fileID: 698868738}
   spawn2: {fileID: 1169893938}
   spawn3: {fileID: 1908558154}
+  timeBeforeStormClosing:
+  - 4
+  - 4
+  - 4
+  - 4
 --- !u!4 &577638164
 Transform:
   m_ObjectHideFlags: 0

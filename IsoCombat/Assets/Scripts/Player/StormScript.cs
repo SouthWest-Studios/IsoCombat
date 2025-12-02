@@ -15,7 +15,7 @@ public class StormScript : MonoBehaviour
     void Start()
     {
         stormCollider = GetComponent<CircleCollider2D>();
-        StartCoroutine(StormRoutine());
+        //StartCoroutine(StormRoutine());
     }
 
     void OnTriggerEnter2D(Collider2D other)
@@ -62,21 +62,42 @@ public class StormScript : MonoBehaviour
 
     IEnumerator StormRoutine()
     {
+
         // Recorremos cada tiempo de la lista
         foreach (float waitTime in timeBeforeClosing)
         {
+
             // Espera antes de cerrarse
             yield return new WaitForSeconds(waitTime);
 
             // Inicia el cierre de esta fase
-            yield return StartCoroutine(Shrink());
+            yield return StartCoroutine(Shrink(3));
         }
     }
 
-    IEnumerator Shrink()
+    public IEnumerator Shrink(int level)
     {
         Vector3 initialScale = circleTransform.localScale;
-        Vector3 finalScale = initialScale + new Vector3(shrinkAmount, shrinkAmount, 0);
+        Vector3 finalScale = Vector3.zero;
+        switch (level)
+        {
+            case 1:
+                finalScale = new Vector3(-3.865f, -3.865f, -4.82f);
+                break;
+            case 2:
+                finalScale = new Vector3(-2.91f, -2.91f, -4.82f);
+                break;
+            case 3:
+                finalScale = new Vector3(-1.955f, -1.955f, -4.82f);
+                break;
+            case 4:
+                finalScale = new Vector3(-1f, -1f, -4.82f);
+                break;
+            default:
+                break;
+        }
+        //Vector3 finalScale = initialScale + new Vector3(shrinkAmount, shrinkAmount, 0);
+
 
         float t = 0f;
 

@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -55,6 +56,12 @@ public struct BulletHitMsg
     public string bulletId;
 }
 
+[Serializable]
+public struct StormState
+{
+    public float scale;
+}
+
 public class GameplayNet : MonoBehaviour
 {
     public static GameplayNet I;
@@ -68,6 +75,16 @@ public class GameplayNet : MonoBehaviour
     [SerializeField] private Transform spawn1;
     [SerializeField] private Transform spawn2;
     [SerializeField] private Transform spawn3;
+
+    public List<float> timeBeforeStormClosing;
+
+    [SerializeField]
+    public struct StormPhaseMsg
+    {
+        public int phase;
+    }
+
+    private StormScript storm;
 
     public Transform GetSpawn(int index)
     {
@@ -118,6 +135,7 @@ public class GameplayNet : MonoBehaviour
 
     void Start()
     {
+
         net = SessionConfig.IsHost ? (INetwork)new UDPServer() : new UDPClient();
         net.Port = SessionConfig.Port;
 
@@ -126,6 +144,9 @@ public class GameplayNet : MonoBehaviour
 
         NetRuntime.Attach(net);
         net.OnMessage += OnMsg;
+
+        storm = FindAnyObjectByType<StormScript>();
+        StartCoroutine(StormRoutine());
 
         if (!SessionConfig.IsSpectator)
         {
@@ -172,6 +193,8 @@ public class GameplayNet : MonoBehaviour
                 dead = false
             };
         }
+        
+        
     }
 
     void OnDestroy()
@@ -416,6 +439,14 @@ public class GameplayNet : MonoBehaviour
             SpawnSpike(spike);
             return;
         }
+
+        if (m.op == NetOperation.STORM_PHASE)
+        {
+            UnityEngine.Debug.Log("aaaaaaaaaa");
+            var sp = JsonUtility.FromJson<StormPhaseMsg>(m.payload);
+            storm.GetComponent<StormScript>().Shrink(sp.phase);
+            return;
+        }
     }
 
     void TryEndMatch()
@@ -658,5 +689,24 @@ public class GameplayNet : MonoBehaviour
                 spikes.Remove(id);
             }
         }
+    }
+
+    IEnumerator StormRoutine()
+    {
+        
+        for (int i = 0; i < timeBeforeStormClosing.Count; i++)
+        {
+            yield return new WaitForSeconds(timeBeforeStormClosing[i]);
+
+            // Avisar al GameplayNet
+            SendStormPhase(i);
+        }
+    }
+
+    public void SendStormPhase(int phaseIndex)
+    {
+        
+        StormPhaseMsg msg = new StormPhaseMsg { phase = phaseIndex };
+        net.SendMessage(NetOperation.STORM_PHASE, JsonUtility.ToJson(msg));
     }
 }

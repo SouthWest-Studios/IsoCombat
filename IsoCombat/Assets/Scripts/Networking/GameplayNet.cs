@@ -69,6 +69,7 @@ public class GameplayNet : MonoBehaviour
     public GameObject playerPrefab;
     public GameObject bulletPrefab;
     public GameObject spikePrefab;
+    public GameObject stormPrefab;
     public bool localDead = false;
 
     [SerializeField] private Transform spawn0;
@@ -145,7 +146,7 @@ public class GameplayNet : MonoBehaviour
         NetRuntime.Attach(net);
         net.OnMessage += OnMsg;
 
-        storm = FindAnyObjectByType<StormScript>();
+
         StartCoroutine(StormRoutine());
 
         if (!SessionConfig.IsSpectator)
@@ -158,13 +159,14 @@ public class GameplayNet : MonoBehaviour
 
             pcLocal = localAvatar.GetComponent<PlayerController>();
             pcLocal.isPlayerLocal = true;
+
         }
         else
         {
             localAvatar = null;
             UnityEngine.Debug.Log("[GameplayNet] Espectador: no se instancia avatar local.");
         }
-
+        storm = Instantiate(stormPrefab).GetComponent<StormScript>();
         
         if (SessionConfig.IsHost)
         {
@@ -442,9 +444,8 @@ public class GameplayNet : MonoBehaviour
 
         if (m.op == NetOperation.STORM_PHASE)
         {
-            UnityEngine.Debug.Log("aaaaaaaaaa");
             var sp = JsonUtility.FromJson<StormPhaseMsg>(m.payload);
-            storm.GetComponent<StormScript>().Shrink(sp.phase);
+            StartCoroutine(storm.Shrink(sp.phase));
             return;
         }
     }
@@ -696,10 +697,19 @@ public class GameplayNet : MonoBehaviour
         
         for (int i = 0; i < timeBeforeStormClosing.Count; i++)
         {
+            if(storm != null)
+            {
+                while (storm.isShrinking)
+                {
+                    yield return null;
+                }
+            }
+            
+
             yield return new WaitForSeconds(timeBeforeStormClosing[i]);
 
             // Avisar al GameplayNet
-            SendStormPhase(i);
+            SendStormPhase(i+1);
         }
     }
 

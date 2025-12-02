@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using static PlayerColliderPart;
+using UnityEngine.SceneManagement;
 public class StormScript : MonoBehaviour
 {
 
@@ -11,6 +12,7 @@ public class StormScript : MonoBehaviour
     public float shrinkAmount = 2f;
     public float shrinkDuration = 3f;
     private Coroutine damageRoutine;
+    public bool isShrinking = false;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -18,12 +20,24 @@ public class StormScript : MonoBehaviour
         //StartCoroutine(StormRoutine());
     }
 
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.BackQuote))
+        {
+            SceneManager.LoadScene("MainMenu");
+        }
+    }
     void OnTriggerEnter2D(Collider2D other)
     {
-
+        
         if (other.CompareTag("PlayerCollision"))
         {
-            if (!other.GetComponent<PlayerColliderPart>().owner) return;
+            if (!other.GetComponent<PlayerColliderPart>().owner.isPlayerLocal)
+            {
+                Debug.Log("falsoooooooo");
+                return;
+            }
+            
         }
         else
         {
@@ -36,19 +50,24 @@ public class StormScript : MonoBehaviour
 
         if (damageRoutine != null)
         {
+            Debug.Log("ha salidooooooooo");
             StopCoroutine(damageRoutine);
             damageRoutine = null;
         }
     }
+      
 
     void OnTriggerExit2D(Collider2D other)
     {
-
+        
         if (!other.CompareTag("PlayerCollision") || !other.GetComponent<PlayerColliderPart>().owner.isPlayerLocal) return;
         var otherPart = other.GetComponent<PlayerColliderPart>();
         if (otherPart.partType == PartType.Upper) return;
         damageRoutine = StartCoroutine(ApplyDamage(other.transform.parent.parent.GetComponent<PlayerController>()));
+        Debug.Log("ha entradooooo");
     }
+
+
 
     IEnumerator ApplyDamage(PlayerController player)
     {
@@ -77,6 +96,7 @@ public class StormScript : MonoBehaviour
 
     public IEnumerator Shrink(int level)
     {
+        UnityEngine.Debug.Log("leveeeel:"+level);
         Vector3 initialScale = circleTransform.localScale;
         Vector3 finalScale = Vector3.zero;
         switch (level)
@@ -100,7 +120,8 @@ public class StormScript : MonoBehaviour
 
 
         float t = 0f;
-
+        isShrinking = true;
+        
         while (t < shrinkDuration)
         {
             t += Time.deltaTime;
@@ -110,7 +131,7 @@ public class StormScript : MonoBehaviour
 
             yield return null;
         }
-
+        isShrinking = false;
         circleTransform.localScale = finalScale; // asegurar el valor final
     }
 

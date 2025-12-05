@@ -75,6 +75,7 @@ public class PlayerController : MonoBehaviour
 
     private Rigidbody2D rb;
 
+    Renderer rend;
 
     // Start is called before the first frame update
     void Start()
@@ -90,7 +91,7 @@ public class PlayerController : MonoBehaviour
         playerSprite.GetComponent<SpriteRenderer>().material.SetFloat("_FillAmount", currentHealth / stats.Get(StatId.MaxHP));
 
         rb = GetComponent<Rigidbody2D>();
-
+        rend = transform.GetChild(0).GetComponent<Renderer>();
         StartCoroutine(RegenRoutine());
         StartCoroutine(Invisible());
 
@@ -290,7 +291,7 @@ public class PlayerController : MonoBehaviour
         if (isDead) return;
 
         SetHealth(amount);
-
+        StartCoroutine(GlowCorrutine());
         if (currentHealth <= 0)
         {
             PlayerDie();
@@ -380,5 +381,15 @@ public class PlayerController : MonoBehaviour
                 yield return new WaitForSeconds(stats.Get(StatId.InvisCount));
             }
         }
+    }
+
+    IEnumerator GlowCorrutine()
+    {
+        
+        float  initialGlow = rend.material.GetFloat("_GlowAmount");
+
+        rend.material.SetFloat("_GlowAmount", 20f);
+        yield return new WaitForSeconds(0.2f);
+        rend.material.SetFloat("_GlowAmount", initialGlow);
     }
 }

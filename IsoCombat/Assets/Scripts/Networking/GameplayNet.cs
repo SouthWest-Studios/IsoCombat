@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -55,6 +56,12 @@ public struct BulletHitMsg
     public string bulletId;
 }
 
+[Serializable]
+public struct StormState
+{
+    public float scale;
+}
+
 public class GameplayNet : MonoBehaviour
 {
     public static GameplayNet I;
@@ -62,12 +69,23 @@ public class GameplayNet : MonoBehaviour
     public GameObject playerPrefab;
     public GameObject bulletPrefab;
     public GameObject spikePrefab;
+    public GameObject stormPrefab;
     public bool localDead = false;
 
     [SerializeField] private Transform spawn0;
     [SerializeField] private Transform spawn1;
     [SerializeField] private Transform spawn2;
     [SerializeField] private Transform spawn3;
+
+    public List<float> timeBeforeStormClosing;
+
+    [SerializeField]
+    public struct StormPhaseMsg
+    {
+        public int phase;
+    }
+
+    private StormScript storm;
 
     public Transform GetSpawn(int index)
     {
@@ -118,6 +136,7 @@ public class GameplayNet : MonoBehaviour
 
     void Start()
     {
+
         net = SessionConfig.IsHost ? (INetwork)new UDPServer() : new UDPClient();
         net.Port = SessionConfig.Port;
 
@@ -126,6 +145,9 @@ public class GameplayNet : MonoBehaviour
 
         NetRuntime.Attach(net);
         net.OnMessage += OnMsg;
+
+
+        StartCoroutine(StormRoutine());
 
         if (!SessionConfig.IsSpectator)
         {
@@ -137,13 +159,14 @@ public class GameplayNet : MonoBehaviour
 
             pcLocal = localAvatar.GetComponent<PlayerController>();
             pcLocal.isPlayerLocal = true;
+
         }
         else
         {
             localAvatar = null;
             UnityEngine.Debug.Log("[GameplayNet] Espectador: no se instancia avatar local.");
         }
-
+        storm = Instantiate(stormPrefab).GetComponent<StormScript>();
         
         if (SessionConfig.IsHost)
         {
@@ -172,6 +195,8 @@ public class GameplayNet : MonoBehaviour
                 dead = false
             };
         }
+        
+        
     }
 
     void OnDestroy()
@@ -416,6 +441,13 @@ public class GameplayNet : MonoBehaviour
             SpawnSpike(spike);
             return;
         }
+
+        if (m.op == NetOperation.STORM_PHASE)
+        {
+            var sp = JsonUtility.FromJson<StormPhaseMsg>(m.payload);
+            StartCoroutine(storm.Shrink(sp.phase));
+            return;
+        }
     }
 
     void TryEndMatch()
@@ -658,5 +690,33 @@ public class GameplayNet : MonoBehaviour
                 spikes.Remove(id);
             }
         }
+    }
+
+    IEnumerator StormRoutine()
+    {
+        
+        for (int i = 0; i < timeBeforeStormClosing.Count; i++)
+        {
+            if(storm != null)
+            {
+                while (storm.isShrinking)
+                {
+                    yield return null;
+                }
+            }
+            
+
+            yield return new WaitForSeconds(timeBeforeStormClosing[i]);
+
+            // Avisar al GameplayNet
+            SendStormPhase(i+1);
+        }
+    }
+
+    public void SendStormPhase(int phaseIndex)
+    {
+        
+        StormPhaseMsg msg = new StormPhaseMsg { phase = phaseIndex };
+        net.SendMessage(NetOperation.STORM_PHASE, JsonUtility.ToJson(msg));
     }
 }

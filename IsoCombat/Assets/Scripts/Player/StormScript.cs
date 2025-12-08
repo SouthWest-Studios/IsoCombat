@@ -32,9 +32,8 @@ public class StormScript : MonoBehaviour
         
         if (other.CompareTag("PlayerCollision"))
         {
-            if (!other.GetComponent<PlayerColliderPart>().owner.isPlayerLocal)
+            if (other.GetComponent<PlayerColliderPart>().owner && !other.GetComponent<PlayerColliderPart>().owner.isPlayerLocal)
             {
-                Debug.Log("falsoooooooo");
                 return;
             }
             
@@ -50,7 +49,6 @@ public class StormScript : MonoBehaviour
 
         if (damageRoutine != null)
         {
-            Debug.Log("ha salidooooooooo");
             StopCoroutine(damageRoutine);
             damageRoutine = null;
         }

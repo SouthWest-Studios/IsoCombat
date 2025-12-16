@@ -62,6 +62,19 @@ public struct StormState
     public float scale;
 }
 
+[Serializable]
+public struct PlayerHealthState
+{
+    public string playerId;
+    public float damaged;
+}
+
+[Serializable]
+public struct HealthSyncMsg
+{
+    public List<PlayerHealthState> players;
+}
+
 public class GameplayNet : MonoBehaviour
 {
     public static GameplayNet I;
@@ -117,6 +130,9 @@ public class GameplayNet : MonoBehaviour
 
     private Color[] coloresFijos = new Color[] { Color.red, Color.green, Color.yellow, Color.blue };
     private int siguienteIndiceColor = 0;
+
+    float healthSyncTimer = 0f;
+    const float HEALTH_SYNC_INTERVAL = 0.5f;
 
     Color GetColorJugador(string playerId)
     {
@@ -226,6 +242,13 @@ public class GameplayNet : MonoBehaviour
                     last[SessionConfig.ClientId] = ps;
 
                     SpawnSpike(ServerSpawnSpikeForPlayer(ps));
+
+                    healthSyncTimer += Time.deltaTime;
+                    if (healthSyncTimer >= HEALTH_SYNC_INTERVAL)
+                    {
+                        healthSyncTimer = 0f;
+                        SendHealthSync();
+                    }
                 }
 
 
@@ -446,6 +469,30 @@ public class GameplayNet : MonoBehaviour
         {
             var sp = JsonUtility.FromJson<StormPhaseMsg>(m.payload);
             StartCoroutine(storm.Shrink(sp.phase));
+            return;
+        }
+
+        if (m.op == NetOperation.HEALTH_SYNC)
+        {
+            var msg = JsonUtility.FromJson<HealthSyncMsg>(m.payload);
+
+            foreach (var p in msg.players)
+            {
+                // Local player
+                if (p.playerId == SessionConfig.ClientId && pcLocal != null)
+                {
+                    pcLocal.SetHealth(p.damaged);
+                    continue;
+                }
+
+                // Remote players
+                if (avatars.TryGetValue(p.playerId, out var t) && t != null)
+                {
+                    var pc = t.GetComponent<PlayerController>();
+                    if (pc != null)
+                        pc.SetHealth(p.damaged);
+                }
+            }
             return;
         }
     }
@@ -718,5 +765,24 @@ public class GameplayNet : MonoBehaviour
         
         StormPhaseMsg msg = new StormPhaseMsg { phase = phaseIndex };
         net.SendMessage(NetOperation.STORM_PHASE, JsonUtility.ToJson(msg));
+    }
+
+    void SendHealthSync()
+    {
+        HealthSyncMsg msg = new HealthSyncMsg
+        {
+            players = new List<PlayerHealthState>()
+        };
+
+        foreach (var kv in last)
+        {
+            msg.players.Add(new PlayerHealthState
+            {
+                playerId = kv.Key,
+                damaged = kv.Value.damaged
+            });
+        }
+
+        net.SendMessage(NetOperation.HEALTH_SYNC, JsonUtility.ToJson(msg));
     }
 }

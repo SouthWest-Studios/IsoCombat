@@ -62,7 +62,7 @@ public class StormScript : MonoBehaviour
         var otherPart = other.GetComponent<PlayerColliderPart>();
         if (otherPart.partType == PartType.Upper) return;
         damageRoutine = StartCoroutine(ApplyDamage(other.transform.parent.parent.GetComponent<PlayerController>()));
-        Debug.Log("ha entradooooo");
+
     }
 
 
@@ -74,21 +74,6 @@ public class StormScript : MonoBehaviour
             Debug.Log("recbio dañooooo");
             player.TakeDamage(1);
             yield return new WaitForSeconds(2f);
-        }
-    }
-
-    IEnumerator StormRoutine()
-    {
-
-        // Recorremos cada tiempo de la lista
-        foreach (float waitTime in timeBeforeClosing)
-        {
-
-            // Espera antes de cerrarse
-            yield return new WaitForSeconds(waitTime);
-
-            // Inicia el cierre de esta fase
-            yield return StartCoroutine(Shrink(3));
         }
     }
 

@@ -19,7 +19,7 @@ public class HealthBarScript : MonoBehaviour
     {
         float fillPercent = player.currentHealth / player.stats.Get(StatId.MaxHP);
         fillPercent = Mathf.Clamp01(fillPercent);
-
+        Debug.Log(player.stats.name + " h: " + fillPercent);
         // Escala solo en X (o el eje que uses)
         fillBar.transform.localScale = new Vector3(initialScale.x * fillPercent, initialScale.y, initialScale.z);
     }

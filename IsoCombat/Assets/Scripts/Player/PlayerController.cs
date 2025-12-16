@@ -300,6 +300,7 @@ public class PlayerController : MonoBehaviour
 
     public void SetHealth(float damage)
     {
+        Debug.Log("damage: "+ damage);
         currentHealth -= damage;
         currentHealth = Mathf.Max(0, currentHealth);
     }

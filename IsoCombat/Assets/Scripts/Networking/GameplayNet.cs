@@ -308,7 +308,6 @@ public class GameplayNet : MonoBehaviour
             rotation = r,
             scale = s,
 
-            // YA NO SE USA PARA VIDA (lo dejamos a 0 para evitar 搑estas?remotas)
             damaged = 0f,
 
             // VIDA ABSOLUTA
@@ -326,8 +325,7 @@ public class GameplayNet : MonoBehaviour
         last[ps.id] = ps;
         net.SendMessage(NetOperation.STATE, JsonUtility.ToJson(ps));
 
-        // Si lo usabas s髄o para red, lo puedes mantener a 0; si lo usas para otra cosa, quita esta l韓ea.
-        pcLocal.haveDamage = 0;
+         pcLocal.haveDamage = 0;
     }
     //Centro de recepción de red
     void OnMsg(NetMsg m)
@@ -336,7 +334,7 @@ public class GameplayNet : MonoBehaviour
         {
             PlayerState ps = JsonUtility.FromJson<PlayerState>(m.payload);
 
-            // Ignorar paquetes viejos / duplicados (UDP no garantiza orden)
+            // Ignorar paquetes viejos / duplicados
             if (lastSeqReceived.TryGetValue(ps.id, out int prevSeq) && ps.seq <= prevSeq)
                 return;
             lastSeqReceived[ps.id] = ps.seq;
@@ -476,8 +474,7 @@ public class GameplayNet : MonoBehaviour
             return;
         }
 
-        // HEALTH_SYNC eliminado: con health absoluto + seq no hace falta y evitamos 搑estas?ruido
-    }
+        
     //Determinar si el juego ha terminado.
     void TryEndMatch()
     {

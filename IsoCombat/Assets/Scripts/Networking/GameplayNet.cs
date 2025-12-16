@@ -10,21 +10,30 @@ public struct PlayerState
     public string id;
     public string name;
     public float x, y, rotation, scale;
+
+    // ANTES: damaged (delta). Lo dejamos por compatibilidad con el JSON, pero ya NO se usa para vida.
     public float damaged;
+
+    // NUEVO: vida absoluta y secuencia
+    public float health;
+    public int seq;
+
     public bool dead;
     public bool isInvisible;
     public List<BulletState> bullets;
     public List<SpikeState> spikes;
-
 }
 
 [Serializable]
-public struct BulletState {
+public struct BulletState
+{
     public string id;
     public float bulletX, bulletY, bulletRotation, bulletScale;
 }
+
 [Serializable]
-public struct SpikeState {
+public struct SpikeState
+{
     public string id;
     public float spikeX, spikeY, spikeVelX, spikeVelY, spikeRotation, spikeAngularVel;
 }
@@ -60,19 +69,6 @@ public struct BulletHitMsg
 public struct StormState
 {
     public float scale;
-}
-
-[Serializable]
-public struct PlayerHealthState
-{
-    public string playerId;
-    public float damaged;
-}
-
-[Serializable]
-public struct HealthSyncMsg
-{
-    public List<PlayerHealthState> players;
 }
 
 public class GameplayNet : MonoBehaviour
@@ -125,14 +121,19 @@ public class GameplayNet : MonoBehaviour
     readonly Dictionary<string, Rigidbody2D> spikes = new();
     Transform localAvatar;
     PlayerController pcLocal;
+
+    // ENVIAR A 20Hz EN VEZ DE 100Hz
+    const float SEND_INTERVAL = 0.01f; 
     float sendTimer;
+
     bool matchEnded;
 
     private Color[] coloresFijos = new Color[] { Color.red, Color.green, Color.yellow, Color.blue };
     private int siguienteIndiceColor = 0;
 
-    float healthSyncTimer = 0f;
-    const float HEALTH_SYNC_INTERVAL = 0.5f;
+    // NUEVO: secuencia local + último seq recibido por jugador (anti out-of-order UDP)
+    int localSeq = 0;
+    readonly Dictionary<string, int> lastSeqReceived = new();
 
     Color GetColorJugador(string playerId)
     {
@@ -152,7 +153,6 @@ public class GameplayNet : MonoBehaviour
 
     void Start()
     {
-
         net = SessionConfig.IsHost ? (INetwork)new UDPServer() : new UDPClient();
         net.Port = SessionConfig.Port;
 
@@ -161,7 +161,6 @@ public class GameplayNet : MonoBehaviour
 
         NetRuntime.Attach(net);
         net.OnMessage += OnMsg;
-
 
         StartCoroutine(StormRoutine());
 
@@ -175,23 +174,21 @@ public class GameplayNet : MonoBehaviour
 
             pcLocal = localAvatar.GetComponent<PlayerController>();
             pcLocal.isPlayerLocal = true;
-
         }
         else
         {
             localAvatar = null;
             UnityEngine.Debug.Log("[GameplayNet] Espectador: no se instancia avatar local.");
         }
+
         storm = Instantiate(stormPrefab).GetComponent<StormScript>();
-        
+
         if (SessionConfig.IsHost)
         {
-
             Color myColor = GetColorJugador(SessionConfig.ClientId);
             if (pcLocal != null) pcLocal.AssignColor(myColor);
             BroadcastAllColors();
         }
-
 
         AddToWinnerList(SessionConfig.ClientId + "_" + SessionConfig.PlayerName);
 
@@ -208,18 +205,17 @@ public class GameplayNet : MonoBehaviour
             {
                 id = SessionConfig.ClientId,
                 name = SessionConfig.PlayerName,
-                dead = false
+                dead = false,
+                seq = 0,
+                health = (pcLocal != null) ? pcLocal.currentHealth : 0f
             };
         }
-        
-        
     }
 
     void OnDestroy()
     {
         if (net != null) net.OnMessage -= OnMsg;
     }
-
 
     void Update()
     {
@@ -239,18 +235,11 @@ public class GameplayNet : MonoBehaviour
                     ps.y = localAvatar.position.y;
                     ps.rotation = localAvatar.rotation.eulerAngles.z;
                     ps.dead = true;
+                    ps.health = pcLocal.currentHealth; // snapshot final
                     last[SessionConfig.ClientId] = ps;
 
                     SpawnSpike(ServerSpawnSpikeForPlayer(ps));
-
-                    healthSyncTimer += Time.deltaTime;
-                    if (healthSyncTimer >= HEALTH_SYNC_INTERVAL)
-                    {
-                        healthSyncTimer = 0f;
-                        SendHealthSync();
-                    }
                 }
-
 
                 SendState(true);
                 pcLocal.enabled = false;
@@ -258,7 +247,7 @@ public class GameplayNet : MonoBehaviour
             }
 
             sendTimer += Time.deltaTime;
-            if (sendTimer >= 0.01f)
+            if (sendTimer >= SEND_INTERVAL)
             {
                 sendTimer = 0f;
                 SendState();
@@ -276,13 +265,14 @@ public class GameplayNet : MonoBehaviour
         float r = localAvatar.rotation.eulerAngles.z;
         float s = localAvatar.localScale.x;
 
-        //Bullets
+        // Bullets
         List<BulletState> bullets = new List<BulletState>();
-        foreach(Rigidbody2D bulletRB in pcLocal.bullets)
+        foreach (Rigidbody2D bulletRB in pcLocal.bullets)
         {
             BulletNetInfo info = bulletRB.GetComponent<BulletNetInfo>();
 
-            bullets.Add(new BulletState {
+            bullets.Add(new BulletState
+            {
                 id = info != null ? info.bulletId : bulletRB.GetInstanceID().ToString(),
                 bulletRotation = bulletRB.rotation,
                 bulletScale = bulletRB.transform.localScale.x,
@@ -291,7 +281,7 @@ public class GameplayNet : MonoBehaviour
             });
         }
 
-        //BallSpikes
+        // BallSpikes
         List<SpikeState> spikeStates = null;
         if (SessionConfig.IsHost)
         {
@@ -314,8 +304,7 @@ public class GameplayNet : MonoBehaviour
             }
         }
 
-
-        //PlayerStats
+        // PlayerStats
         var ps = new PlayerState
         {
             id = SessionConfig.ClientId,
@@ -324,7 +313,16 @@ public class GameplayNet : MonoBehaviour
             y = p.y,
             rotation = r,
             scale = s,
-            damaged = pcLocal.haveDamage,
+
+            // YA NO SE USA PARA VIDA (lo dejamos a 0 para evitar “restas” remotas)
+            damaged = 0f,
+
+            // VIDA ABSOLUTA
+            health = pcLocal.currentHealth,
+
+            // SEQ PARA ORDENAR/IGNORAR PAQUETES VIEJOS
+            seq = ++localSeq,
+
             dead = localDead,
             isInvisible = pcLocal.isInvisble,
             bullets = bullets,
@@ -333,6 +331,8 @@ public class GameplayNet : MonoBehaviour
 
         last[ps.id] = ps;
         net.SendMessage(NetOperation.STATE, JsonUtility.ToJson(ps));
+
+        // Si lo usabas sólo para red, lo puedes mantener a 0; si lo usas para otra cosa, quita esta línea.
         pcLocal.haveDamage = 0;
     }
 
@@ -341,7 +341,12 @@ public class GameplayNet : MonoBehaviour
         if (m.op == NetOperation.STATE)
         {
             PlayerState ps = JsonUtility.FromJson<PlayerState>(m.payload);
-            
+
+            // Ignorar paquetes viejos / duplicados (UDP no garantiza orden)
+            if (lastSeqReceived.TryGetValue(ps.id, out int prevSeq) && ps.seq <= prevSeq)
+                return;
+            lastSeqReceived[ps.id] = ps.seq;
+
             if (SessionConfig.IsHost)
             {
                 if (last.TryGetValue(ps.id, out var prev))
@@ -365,7 +370,7 @@ public class GameplayNet : MonoBehaviour
 
                 AddToWinnerList(ps.id + "_" + ps.name);
 
-                //Color
+                // Color
                 if (SessionConfig.IsHost)
                 {
                     Color nuevoColor = GetColorJugador(ps.id);
@@ -379,15 +384,14 @@ public class GameplayNet : MonoBehaviour
                 }
             }
 
-            //Bullets
+            // Bullets
             SyncRemoteBullets(ps.id, ps.bullets);
 
-            //Spikes
+            // Spikes
             if (!SessionConfig.IsHost && ps.spikes != null && ps.spikes.Count > 0)
             {
                 SyncSpikes(ps.spikes);
             }
-
 
             if (ps.dead)
             {
@@ -401,19 +405,24 @@ public class GameplayNet : MonoBehaviour
                 t.position = new Vector3(ps.x, ps.y, 0f);
                 t.rotation = Quaternion.Euler(0f, 0f, ps.rotation);
                 t.localScale = new Vector3(ps.scale, ps.scale, ps.scale);
-                t.GetComponent<PlayerController>().SetHealth(ps.damaged);
-                if (ps.isInvisible) {
-                    //Hacerlo invisible
+
+                // VIDA ABSOLUTA (no delta)
+                var pc = t.GetComponent<PlayerController>();
+                if (pc != null)
+                {
+                    pc.currentHealth = (ps.health < 0) ? 0f : ps.health;
+                }
+
+                if (ps.isInvisible)
+                {
                     SpriteRenderer r = t.GetComponentInChildren<SpriteRenderer>();
                     if (r) r.enabled = false;
                 }
                 else
                 {
-                    //Hacerlo visible
                     SpriteRenderer r = t.GetComponentInChildren<SpriteRenderer>();
                     if (r) r.enabled = true;
                 }
-
             }
 
             if (SessionConfig.IsHost) TryEndMatch();
@@ -472,29 +481,7 @@ public class GameplayNet : MonoBehaviour
             return;
         }
 
-        if (m.op == NetOperation.HEALTH_SYNC)
-        {
-            var msg = JsonUtility.FromJson<HealthSyncMsg>(m.payload);
-
-            foreach (var p in msg.players)
-            {
-                // Local player
-                if (p.playerId == SessionConfig.ClientId && pcLocal != null)
-                {
-                    pcLocal.SetHealth(p.damaged);
-                    continue;
-                }
-
-                // Remote players
-                if (avatars.TryGetValue(p.playerId, out var t) && t != null)
-                {
-                    var pc = t.GetComponent<PlayerController>();
-                    if (pc != null)
-                        pc.SetHealth(p.damaged);
-                }
-            }
-            return;
-        }
+        // HEALTH_SYNC eliminado: con health absoluto + seq no hace falta y evitamos “restas”/ruido.
     }
 
     void TryEndMatch()
@@ -585,7 +572,6 @@ public class GameplayNet : MonoBehaviour
             rb.transform.localScale = Vector3.one * b.bulletScale;
         }
 
-        //Destruir las balas que hagan falta
         var idsLocales = new List<string>(playerBullets.Keys);
         foreach (var bulletId in idsLocales)
         {
@@ -600,7 +586,7 @@ public class GameplayNet : MonoBehaviour
 
     void HandleBulletHit(BulletHitMsg hit)
     {
-        //Local
+        // Local
         if (SessionConfig.ClientId == hit.ownerId && localAvatar != null)
         {
             var pcLocal = localAvatar.GetComponent<PlayerController>();
@@ -626,7 +612,7 @@ public class GameplayNet : MonoBehaviour
             }
         }
 
-        //Remotas
+        // Remotas
         if (remoteBullets.TryGetValue(hit.ownerId, out var playerBullets))
         {
             if (playerBullets.TryGetValue(hit.bulletId, out var rb) && rb != null)
@@ -688,7 +674,7 @@ public class GameplayNet : MonoBehaviour
         if (dir.sqrMagnitude < 0.0001f)
             dir = Vector2.up;
 
-        float speed = 8f;          
+        float speed = 8f;
         float angVel = 360f * (UnityEngine.Random.value < 0.5f ? -1f : 1f);
 
         SpikeState spike = new SpikeState
@@ -741,48 +727,26 @@ public class GameplayNet : MonoBehaviour
 
     IEnumerator StormRoutine()
     {
-        
         for (int i = 0; i < timeBeforeStormClosing.Count; i++)
         {
-            if(storm != null)
+            if (storm != null)
             {
                 while (storm.isShrinking)
                 {
                     yield return null;
                 }
             }
-            
 
             yield return new WaitForSeconds(timeBeforeStormClosing[i]);
 
             // Avisar al GameplayNet
-            SendStormPhase(i+1);
+            SendStormPhase(i + 1);
         }
     }
 
     public void SendStormPhase(int phaseIndex)
     {
-        
         StormPhaseMsg msg = new StormPhaseMsg { phase = phaseIndex };
         net.SendMessage(NetOperation.STORM_PHASE, JsonUtility.ToJson(msg));
-    }
-
-    void SendHealthSync()
-    {
-        HealthSyncMsg msg = new HealthSyncMsg
-        {
-            players = new List<PlayerHealthState>()
-        };
-
-        foreach (var kv in last)
-        {
-            msg.players.Add(new PlayerHealthState
-            {
-                playerId = kv.Key,
-                damaged = kv.Value.damaged
-            });
-        }
-
-        net.SendMessage(NetOperation.HEALTH_SYNC, JsonUtility.ToJson(msg));
     }
 }

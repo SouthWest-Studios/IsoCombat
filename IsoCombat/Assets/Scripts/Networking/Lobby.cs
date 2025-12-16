@@ -17,7 +17,7 @@ public class Lobby : MonoBehaviour
 
     INetwork _net;
     System.Action<string> _externalSystemHandler;
-
+    
     public void Bind(INetwork net, System.Action<string> onSystem = null)
     {
         _net = net;
@@ -28,7 +28,7 @@ public class Lobby : MonoBehaviour
 
         if (playButton) playButton.gameObject.SetActive(_net.IsServer);
     }
-
+    //Enviar mensaje de chat
     public void OnSendChat()
     {
         if (_net == null) return;
@@ -36,7 +36,7 @@ public class Lobby : MonoBehaviour
         chatInput.text = string.Empty;
         if (!string.IsNullOrEmpty(t)) _net.Send(t);
     }
-
+    //Enviar mensaje a la red
     public void OnSendAsServer()
     {
         if (_net == null) return;
@@ -49,7 +49,7 @@ public class Lobby : MonoBehaviour
     void AppendLog(string s) => Append(logText, s);
     void Append(TextMeshProUGUI text, string s) { if (text == null) return; text.text += s + "\n"; }
     void AppendChat(string s) { if (chatText == null || string.IsNullOrEmpty(s)) return; _chatMessages.Add(s); RebuildChatText(); }
-
+    //Actualiza el chat y elimina los mensajes antiguos
     void RebuildChatText()
     {
         if (chatText == null) return;

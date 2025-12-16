@@ -28,7 +28,7 @@ public class LobbyController : MonoBehaviour
 
         if (playButton) playButton.SetActive(_net.IsServer);
     }
-
+    //Cuando se presiona el bot¨®n de Play
     public void OnClickPlay()
     {
         _net.SendMessage(NetOperation.SYSTEM, "__PLAY__");
@@ -40,7 +40,7 @@ public class LobbyController : MonoBehaviour
 
     //void OnDestroy() { _net?.Stop(); }
 
-
+    //Cuando se inicia el juego, borra el estado y carga la escena del juego
     void OnSystemMessage(string msg)
     {
         if (msg.Contains("__PLAY__"))

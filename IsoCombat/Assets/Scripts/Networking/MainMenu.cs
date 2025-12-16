@@ -19,7 +19,7 @@ public class MainMenuUI : MonoBehaviour
         if (joinPopup) joinPopup.SetActive(false);
     }
 
-
+    //Crear una sala
     public void OnCreateRoom()
     {
         ApplySession();
@@ -27,7 +27,7 @@ public class MainMenuUI : MonoBehaviour
         CircleTransition.instance.CloseBlackScreen("Lobby");
     }
 
-
+    //Unirse a la sala
     public void OnJoinRoom()
     {
         ApplySession();
@@ -35,19 +35,22 @@ public class MainMenuUI : MonoBehaviour
         //SceneManager.LoadScene("Client");
     }
 
+    //Config¨²rese como cliente
+    //Configure la IP del servidor 
+    //Desactive la pantalla negra en el lobby
     public void OnJoinPopupConnect()
     {
         SessionConfig.IsHost = false;
         SessionConfig.ServerIp = string.IsNullOrEmpty(ipJoinInput.text) ? "127.0.0.1" : ipJoinInput.text;
         CircleTransition.instance.CloseBlackScreen("Lobby");
     }
-
+    //Ocultar ventana emergente
     public void OnJoinPopupCancel()
     {
         if (joinPopup) joinPopup.SetActive(false);
     }
 
-
+    //Establecer el nombre del jugador y el puerto de red
     void ApplySession()
     {
         SessionConfig.PlayerName = string.IsNullOrEmpty(nameInput.text) ? "Player" : nameInput.text;

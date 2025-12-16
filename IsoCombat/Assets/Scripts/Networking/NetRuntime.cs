@@ -8,6 +8,8 @@ public class NetRuntime : MonoBehaviour
     public static Dictionary<string, int> winners = new Dictionary<string, int>();
     public static Dictionary<string, Color> colors = new Dictionary<string, Color>();
     public static string lastWinner = "";
+
+    //Adjunta la instancia de red al runtime
     public static void Attach(INetwork net)
     {
         if (NetRuntime.Net != null && NetRuntime.Net != net)
@@ -24,7 +26,7 @@ public class NetRuntime : MonoBehaviour
         Net = net;
 
     }
-
+    //Resetea los ganadores
     public static void ResetWinners()
     {
         if (winners != null && winners.Count > 0)

@@ -18,8 +18,10 @@ public class UDPClient : INetwork
     Socket _sock;
     IPEndPoint _server;
 
+    //Iniciar el servidor
     public void StartServer(string serverName) { }
 
+    //Iniciar el cliente
     public void StartClient(string serverIp, string clientName)
     {
         LocalName = clientName;
@@ -30,7 +32,7 @@ public class UDPClient : INetwork
         IsRunning = true;
 
     }
-
+    //Recibir datos UDP y procesar mensajes de red
     public void Tick()
     {
         if (!IsRunning) return;
@@ -58,17 +60,17 @@ public class UDPClient : INetwork
             catch (Exception e) { OnLog?.Invoke(e.Message); break; }
         }
     }
-
+    // Enviar mensaje de chat
     public void Send(string text)
     {
         Debug.Log("No se tendria que usar el chat en UDP -> " + text);
     }
-
+    // Enviar mensaje de red
     public void SendMessage(NetOperation op, string payload)
     {
         var bytes = NetCodec.Encode(new NetMsg { op = op, payload = payload }, NetTransport.UDP);
         try { _sock.SendTo(bytes, _server); } catch (Exception e) { OnLog?.Invoke(e.Message); }
     }
-
+    // Detener la conexi¨®n
     public void Stop() { try { _sock?.Close(); } catch (Exception e) { OnLog?.Invoke(e.Message); } _sock = null; IsRunning = false; }
 }

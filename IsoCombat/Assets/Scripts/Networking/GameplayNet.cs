@@ -248,7 +248,7 @@ public class GameplayNet : MonoBehaviour
             }
         }
     }
-    //Sincroniza el estado actual del reproductor local con la red
+    //Pasar el estado de jugador a otros
     void SendState(bool immediate = false)
     {
         if (localDead && !immediate) return;

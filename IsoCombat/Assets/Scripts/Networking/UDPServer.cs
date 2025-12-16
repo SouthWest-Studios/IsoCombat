@@ -19,6 +19,7 @@ public class UDPServer : INetwork
     Socket _sock;
     readonly HashSet<string> _peers = new();
 
+    //Iniciar el servidor
     public void StartServer(string serverName)
     {
         LocalName = serverName;
@@ -28,9 +29,9 @@ public class UDPServer : INetwork
         IsRunning = true;
         OnLog?.Invoke($"UDP server *:{Port}");
     }
-
+    //Iniciar el cliente
     public void StartClient(string serverIp, string clientName) { }
-
+    //Recibir datos UDP y procesar mensajes de red
     public void Tick()
     {
         if (!IsRunning) return;
@@ -52,7 +53,7 @@ public class UDPServer : INetwork
             catch (Exception e) { OnLog?.Invoke(e.Message); break; }
         }
     }
-
+    // Procesar y enrutar mensajes recibidos
     void Route(IPEndPoint from, NetMsg msg)
     {
        
@@ -65,7 +66,7 @@ public class UDPServer : INetwork
         }        
         OnMessage?.Invoke(msg);
     }
-
+    // Enviar un mensaje a todos los clientes conectados
     void Broadcast(NetMsg m)
     {
         byte[] data = NetCodec.Encode(m, NetTransport.UDP);
@@ -76,19 +77,19 @@ public class UDPServer : INetwork
             try { _sock.SendTo(data, ep); } catch (Exception e) { OnLog?.Invoke(e.Message); }
         }
     }
-
+    // Enviar un mensaje a un cliente espec¨ªfico
     void SendTo(IPEndPoint ep, NetMsg m)
     {
         try { _sock.SendTo(NetCodec.Encode(m, NetTransport.UDP), ep); }
         catch (Exception e) { OnLog?.Invoke(e.Message); }
     }
-
+    // Enviar mensaje de chat
     public void Send(string text) {
         Debug.Log("No se tendria que usar el chat en UDP -> " + text);
     }
-    
-    
 
+
+    // Enviar mensaje de red
     public void SendMessage(NetOperation op, string payload)
     {
         Broadcast(new NetMsg { op = op, payload = payload });
@@ -99,6 +100,6 @@ public class UDPServer : INetwork
                 break;
         }
     }
-
+    // Detener el servidor
     public void Stop() { try { _sock?.Close(); } catch (Exception e) { OnLog?.Invoke(e.Message); } _sock = null; IsRunning = false; }
 }

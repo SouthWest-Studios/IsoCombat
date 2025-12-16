@@ -399,6 +399,7 @@ public class GameplayNet : MonoBehaviour
                 if (r) r.enabled = false;
                 PlayerController pc = t.GetComponent<PlayerController>();
                 if (pc) pc.enabled = false;
+                t.gameObject.SetActive(false);
             }
             else
             {

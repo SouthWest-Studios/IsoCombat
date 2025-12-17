@@ -372,24 +372,42 @@ public class PlayerController : MonoBehaviour
         }
     }
     //Invisible
-    IEnumerator Invisible() {
-       
+    IEnumerator Invisible()
+    {
         while (isPlayerLocal && !isDead)
         {
-            if(StatId.InvisSpeed > 0)
+            float invisSpeed = stats.Get(StatId.InvisSpeed);
+            float invisCount = stats.Get(StatId.InvisCount);
+
+            if (invisSpeed <= 0f)
             {
-                Color OriColor = NetRuntime.colors[SessionConfig.ClientId];
-                OriColor.a = 0.6f;
-                isInvisble = true;
-                this.GetComponentInChildren<SpriteRenderer>().color = OriColor;
-                yield return new WaitForSeconds(stats.Get(StatId.InvisSpeed));
-                isInvisble = false;
-                OriColor.a = 1f;
-                this.GetComponentInChildren<SpriteRenderer>().color = OriColor;
-                yield return new WaitForSeconds(stats.Get(StatId.InvisCount));
+                yield return null;
+                continue;
             }
+
+            if (!NetRuntime.colors.TryGetValue(SessionConfig.ClientId, out Color oriColor))
+            {
+                
+                yield return null;
+                continue;
+            }
+
+            var sr = GetComponentInChildren<SpriteRenderer>();
+
+            oriColor.a = 0.6f;
+            isInvisble = true;
+            sr.color = oriColor;
+
+            yield return new WaitForSeconds(invisSpeed);
+
+            oriColor.a = 1f;
+            isInvisble = false;
+            sr.color = oriColor;
+
+            yield return new WaitForSeconds(invisCount);
         }
     }
+
     //Glow Effect
     IEnumerator GlowCorrutine()
     {

@@ -117,7 +117,7 @@ public class GameplayNet : MonoBehaviour
     Transform localAvatar;
     PlayerController pcLocal;
 
-    // SEND AT 20Hz INSTEAD OF 100Hz
+    // SEND AT 100Hz
     const float SEND_INTERVAL = 0.01f; 
     float sendTimer;
 
@@ -251,7 +251,7 @@ public class GameplayNet : MonoBehaviour
     //Transfer player status to others
     void SendState(bool immediate = false)
     {
-        if (localDead && !immediate) return;
+        if (!SessionConfig.IsHost && localDead && !immediate) return;
 
         PlayerController pcLocal = localAvatar.GetComponent<PlayerController>();
 

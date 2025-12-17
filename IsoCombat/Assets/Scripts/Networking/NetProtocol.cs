@@ -21,7 +21,7 @@ public struct NetMsg
 
 public static class NetCodec
 {
-    //Serializar el objeto del mensaje
+    //Serialize the message object
     public static byte[] Encode(NetMsg m, NetTransport t)
     {
         Normalize(ref m);
@@ -36,7 +36,7 @@ public static class NetCodec
         bw.Write(body);
         return ms.ToArray();
     }
-    //Analizar mensajes de red desde el b¨²fer TCP
+    //Analyze network messages from the TCP buffer
     public static bool TryDecodeTcp(ref List<byte> buf, out NetMsg msg)
     {
         msg = default;
@@ -50,7 +50,7 @@ public static class NetCodec
         buf.RemoveRange(0, 4 + len);
         return !(msg.op == NetOperation.NULL);
     }
-    //An¨¢lisis de mensajes de red a partir de datos UDP
+    //Network message analysis from UDP data
     public static bool TryDecodeUdp(byte[] data, int count, out NetMsg msg)
     {
         msg = default;
@@ -62,7 +62,7 @@ public static class NetCodec
         }
         catch { return false; }
     }
-    //Agregar marcas de tiempo a los mensajes en l¨ªnea
+    //Add timestamps to online messages
     static void Normalize(ref NetMsg m)
     {
         if (m.ts == 0) m.ts = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();

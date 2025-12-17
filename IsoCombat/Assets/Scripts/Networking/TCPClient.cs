@@ -18,10 +18,10 @@ public class TCPClient : INetwork
     Socket _sock;
     List<byte> _rx = new(8192);
 
-    //Iniciar el servidor
+    //Start the server
     public void StartServer(string n) { }
 
-    //Iniciar el cliente
+    //Start the client
     public void StartClient(string serverIp, string clientName)
     {
         LocalName = clientName;
@@ -36,7 +36,7 @@ public class TCPClient : INetwork
         OnSystemMessage?.Invoke($"Connected to {serverIp}:{Port}");
         SendMessage(NetOperation.SYSTEM, $"HELLO {LocalName}");
     }
-    //Recibir datos TCP y procesar mensajes de red
+    //Receive TCP data and process network messages
     public void Tick()
     {
         if (!IsRunning || _sock == null) return;
@@ -73,9 +73,9 @@ public class TCPClient : INetwork
         }
         catch (Exception e) { OnLog?.Invoke(e.Message); }
     }
-    //Enviar mensaje de chat
+    //Send chat message
     public void Send(string text) => SendMessage(NetOperation.CHAT, $"{LocalName}: {text}");
-    // Enviar mensaje de red genérico
+    // Send generic network message
     public void SendMessage(NetOperation op, string payload)
     {
         try
@@ -85,7 +85,7 @@ public class TCPClient : INetwork
         }
         catch (Exception e) { OnLog?.Invoke(e.Message); }
     }
-    // Detener el cliente
+    // Stop the customer
     public void Stop()
     {
         IsRunning = false;

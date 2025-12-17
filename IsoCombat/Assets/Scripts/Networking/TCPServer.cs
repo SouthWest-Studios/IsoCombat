@@ -29,8 +29,8 @@ public class TCPServer : INetwork
     Socket _listen;
     readonly List<Socket> _clients = new();
     readonly Dictionary<Socket, List<byte>> _rx = new();
-    
-    //Iniciar el servidor
+
+    //Start the server
     public void StartServer(string serverName)
     {
         LocalName = serverName;
@@ -41,9 +41,9 @@ public class TCPServer : INetwork
         IsRunning = true;
         OnSystemMessage?.Invoke($"Server '{LocalName}' listening {Port}");
     }
-    //Iniciar el cliente
+    //Start the client
     public void StartClient(string ip, string clientName) { }
-    //Recibir datos TCP y procesar mensajes de red
+    //Receive TCP data and process network messages
     public void Tick()
     {
         if (!IsRunning) return;
@@ -103,12 +103,12 @@ public class TCPServer : INetwork
             catch { Disconnect(i, c, "Error"); }
         }
     }
-    // Procesar y enrutar mensajes recibidos
+    // Process and route received messages
     void Route(Socket from, NetMsg msg)
     {
         if (_connectionTypes.TryGetValue(from, out var t) && t == PlayerConnectionType.Spectator && (msg.op == NetOperation.MG_READY || msg.op == NetOperation.UPGRADE_PICKED))
         {
-            return; // lo ignoramos en silencio
+            return; // we silently ignore it
         }
 
         Broadcast(msg);
@@ -124,7 +124,7 @@ public class TCPServer : INetwork
         }
         OnMessage?.Invoke(msg);
     }
-    //Enviar mensajes a todos los clientes a trav¨¦s de TCP
+    //Send messages to all clients via TCP
     void Broadcast(NetMsg m)
     {
         var bytes = NetCodec.Encode(m, NetTransport.TCP);
@@ -135,13 +135,13 @@ public class TCPServer : INetwork
             catch { Disconnect(i, c, "Send fail"); }
         }
     }
-    //Enviar mensajes al cliente especificado a trav¨¦s de TCP
+    //Send messages to the specified client via TCP
     void SendRaw(Socket c, NetMsg m)
     {
         try { c?.Send(NetCodec.Encode(m, NetTransport.TCP)); }
         catch (Exception e) { OnLog?.Invoke(e.Message); }
     }
-    // Desconectar cliente
+    // Disconnect client
     void Disconnect(int idx, Socket c, string why)
     {
         OnSystemMessage?.Invoke($"Client {c?.RemoteEndPoint} disconnected: {why}");
@@ -151,7 +151,7 @@ public class TCPServer : INetwork
         _rx.Remove(c);
         _connectionTypes.Remove(c);
     }
-    // Detener el servidor
+    // Stop the server
     public void Stop()
     {
         IsRunning = false;
@@ -161,13 +161,13 @@ public class TCPServer : INetwork
         _listen = null;
         OnSystemMessage?.Invoke("Server stopped");
     }
-    //Enviar mensaje de chat
+    //Send chat message
     public void Send(string text) {
         OnChatMessage?.Invoke($"{LocalName}: {text}");
         SendMessage(NetOperation.CHAT, $"{LocalName}: {text}");
 
     }
-    // Enviar mensaje de red gen¨¦rico
+    // Send generic network messageK
     public void SendMessage(NetOperation op, string payload)
     {
         Broadcast(new NetMsg { op = op, payload = payload });

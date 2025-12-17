@@ -102,7 +102,7 @@ public class GameplayNet : MonoBehaviour
             default: return null;
         }
     }
-    //Establecer el punto de aparición del jugador
+    //Set the player's spawn point
     public void SetPlayerAtSpawn(GameObject player, int index)
     {
         var t = GetSpawn(index);
@@ -117,7 +117,7 @@ public class GameplayNet : MonoBehaviour
     Transform localAvatar;
     PlayerController pcLocal;
 
-    // ENVIAR A 20Hz EN VEZ DE 100Hz
+    // SEND AT 20Hz INSTEAD OF 100Hz
     const float SEND_INTERVAL = 0.01f; 
     float sendTimer;
 
@@ -128,7 +128,7 @@ public class GameplayNet : MonoBehaviour
 
     int localSeq = 0;
     readonly Dictionary<string, int> lastSeqReceived = new();
-    //Asignar un color fijo a cada jugador
+    //Assign a fixed color to each player
     Color GetColorJugador(string playerId)
     {
         if (NetRuntime.colors.TryGetValue(playerId, out var existing))
@@ -248,7 +248,7 @@ public class GameplayNet : MonoBehaviour
             }
         }
     }
-    //Pasar el estado de jugador a otros
+    //Transfer player status to others
     void SendState(bool immediate = false)
     {
         if (localDead && !immediate) return;
@@ -310,10 +310,10 @@ public class GameplayNet : MonoBehaviour
 
             damaged = 0f,
 
-            // VIDA ABSOLUTA
+            // ABSOLUTE LIFE
             health = pcLocal.currentHealth,
 
-            // SEQ PARA ORDENAR/IGNORAR PAQUETES VIEJOS
+            // SEQ TO ORDER/IGNORE OLD PACKAGES
             seq = ++localSeq,
 
             dead = localDead,
@@ -327,14 +327,14 @@ public class GameplayNet : MonoBehaviour
 
          pcLocal.haveDamage = 0;
     }
-    //Centro de recepción de red
+    //Network Receiving Center
     void OnMsg(NetMsg m)
     {
         if (m.op == NetOperation.STATE)
         {
             PlayerState ps = JsonUtility.FromJson<PlayerState>(m.payload);
 
-            // Ignorar paquetes viejos / duplicados
+            // Ignore old/duplicate packages
             if (lastSeqReceived.TryGetValue(ps.id, out int prevSeq) && ps.seq <= prevSeq)
                 return;
             lastSeqReceived[ps.id] = ps.seq;
@@ -399,7 +399,7 @@ public class GameplayNet : MonoBehaviour
                 t.rotation = Quaternion.Euler(0f, 0f, ps.rotation);
                 t.localScale = new Vector3(ps.scale, ps.scale, ps.scale);
 
-                // VIDA ABSOLUTA (no delta)
+                // ABSOLUTE LIFE (no delta)
                 var pc = t.GetComponent<PlayerController>();
                 if (pc != null)
                 {
@@ -474,9 +474,9 @@ public class GameplayNet : MonoBehaviour
             return;
         }
 
-        
-    //Determinar si el juego ha terminado.
-    void TryEndMatch()
+
+        //Determine if the game is over
+        void TryEndMatch()
     {
         if (matchEnded) return;
         int vivos = 0;
@@ -507,13 +507,13 @@ public class GameplayNet : MonoBehaviour
             }
         }
     }
-    //Añadir un jugador a la lista de estadísticas de ganadores
+    //Add a player to the winners statistics list
     void AddToWinnerList(string name)
     {
         if (!NetRuntime.winners.ContainsKey(name))
             NetRuntime.winners[name] = 0;
     }
-    //Empaqueta la información del jugador y luego envíala a la red
+    //Package the player information and then send it to the network
     void BroadcastAllColors()
     {
         var allColors = new AllPlayerColorsMsg { players = new List<PlayerColorMsg>() };
@@ -527,7 +527,8 @@ public class GameplayNet : MonoBehaviour
         }
         net.SendMessage(NetOperation.PLAYER_COLOR, JsonUtility.ToJson(allColors));
     }
-    //Estado de la bala del jugador y sincronización local
+        //Player bullet status and local sync
+
     void SyncRemoteBullets(string ownerId, List<BulletState> bulletStates)
     {
         if (!remoteBullets.TryGetValue(ownerId, out var playerBullets))
@@ -575,7 +576,7 @@ public class GameplayNet : MonoBehaviour
             }
         }
     }
-    //Procesar la información de la bala del jugador
+    //Process the player's bullet information
     void HandleBulletHit(BulletHitMsg hit)
     {
         // Local
@@ -604,7 +605,7 @@ public class GameplayNet : MonoBehaviour
             }
         }
 
-        // Remotas
+        // Remote
         if (remoteBullets.TryGetValue(hit.ownerId, out var playerBullets))
         {
             if (playerBullets.TryGetValue(hit.bulletId, out var rb) && rb != null)
@@ -614,12 +615,12 @@ public class GameplayNet : MonoBehaviour
             }
         }
     }
-    //Enviar mensaje
+    //Send message
     public void SendMessage(NetOperation op, string payloadJsonOrText)
     {
         net.SendMessage(op, payloadJsonOrText);
     }
-    //Enviar información de colisión de bala
+    //Send bullet collision information
     public void BulletHit(BulletNetInfo info)
     {
         if (info == null) return;
@@ -632,7 +633,7 @@ public class GameplayNet : MonoBehaviour
         string json = JsonUtility.ToJson(msg);
         NetRuntime.Net.SendMessage(NetOperation.BULLET_HIT, json);
     }
-    //Generar spike en el juego
+    //Generate a spike in the game
     void SpawnSpike(SpikeState s)
     {
         if (spikePrefab == null)
@@ -657,7 +658,7 @@ public class GameplayNet : MonoBehaviour
         rb.linearVelocity = new Vector2(s.spikeVelX, s.spikeVelY);
         rb.angularVelocity = s.spikeAngularVel;
     }
-    //Generar spike para el jugador
+    //Generate spike for the player
     SpikeState ServerSpawnSpikeForPlayer(PlayerState ps)
     {
         Vector2 pos = new Vector2(ps.x, ps.y);
@@ -681,7 +682,7 @@ public class GameplayNet : MonoBehaviour
         };
         return spike;
     }
-    //Sincronizar spikes
+    //Synchronize spikes
     void SyncSpikes(List<SpikeState> list)
     {
         var idsRecibidos = new HashSet<string>();
@@ -716,7 +717,7 @@ public class GameplayNet : MonoBehaviour
             }
         }
     }
-    //Rutina de tormenta
+    //Storm routine
     IEnumerator StormRoutine()
     {
         for (int i = 0; i < timeBeforeStormClosing.Count; i++)
@@ -731,11 +732,11 @@ public class GameplayNet : MonoBehaviour
 
             yield return new WaitForSeconds(timeBeforeStormClosing[i]);
 
-            // Avisar al GameplayNet
+            // Notify GameplayNet
             SendStormPhase(i + 1);
         }
     }
-    //Enviar fase de tormenta
+    //Send storm phase
     public void SendStormPhase(int phaseIndex)
     {
         StormPhaseMsg msg = new StormPhaseMsg { phase = phaseIndex };

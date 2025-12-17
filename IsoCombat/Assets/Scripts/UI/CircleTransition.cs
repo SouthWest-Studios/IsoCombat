@@ -91,14 +91,14 @@ public class CircleTransition : MonoBehaviour
             mat.SetFloat(GLITCH_INTENSITY, 0.5f + Mathf.Sin(counter * 3f) * 0.1f);
         }
     }
-
+    //Black screen transition Open
     public void OpenBlackScreen()
     {
         _audioSource.PlayOneShot(fadeInSFX);
         DrawBlackScreen();
         StartCoroutine(Transition(transitionDuration, 0, 1));
     }
-
+    //Black screen transition Close
     public void CloseBlackScreen(string sceneTarget = "")
     {
         _audioSource.PlayOneShot(fadeOutSFX);
@@ -106,6 +106,7 @@ public class CircleTransition : MonoBehaviour
         StartCoroutine(Transition(transitionDuration, 1, -0.5f, sceneTarget));
     }
 
+    //Black screen transition Draw
     private void DrawBlackScreen()
     {
         var screenWidth = Screen.width;
@@ -151,6 +152,7 @@ public class CircleTransition : MonoBehaviour
         _blackScreen.rectTransform.sizeDelta = new Vector2(squareValue, squareValue);
     }
 
+    //Black screen transition
     private IEnumerator Transition(float duration, float beginRadius, float endRadius, string sceneTarget = "")
     {
 
@@ -213,7 +215,7 @@ public class CircleTransition : MonoBehaviour
         }
 
     }
-
+    //Delete saved progress
     private void DeleteProgress()
     {
         string path = Application.persistentDataPath + "/save.json";

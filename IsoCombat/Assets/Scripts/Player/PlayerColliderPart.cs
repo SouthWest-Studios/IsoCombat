@@ -15,7 +15,7 @@ public class PlayerColliderPart : MonoBehaviour
     {
         owner = GetComponentInParent<PlayerController>();
     }
-
+    //Collision between player and bullet
     void OnCollisionEnter2D(Collision2D collision)
     {
         if (owner == null) { owner = GetComponentInParent<PlayerController>(); }
@@ -48,7 +48,7 @@ public class PlayerColliderPart : MonoBehaviour
 
         if (partType == PartType.Lower && otherPart.partType == PartType.Upper)
         {
-            Debug.Log($"{owner.name} golpeó a {otherPart.owner.name}");
+            Debug.Log($"{owner.name} golpe?a {otherPart.owner.name}");
             owner.TakeDamage(1);
         }
 
@@ -56,12 +56,12 @@ public class PlayerColliderPart : MonoBehaviour
 
         if (rbOwner != null && rbOther != null)
         {
-            // Dirección normal del impacto
+            // Normal direction of impact
 
             Vector2 dir = rbOwner.transform.position - rbOther.transform.position;
             dir.Normalize();
 
-            // Aplicar fuerza opuesta a cada uno
+            // Apply opposing force to each one
             rbOwner.AddForce(dir * bounceForce, ForceMode2D.Impulse);
             rbOther.AddForce(-dir * bounceForce, ForceMode2D.Impulse);
 
@@ -71,6 +71,7 @@ public class PlayerColliderPart : MonoBehaviour
 
 
     }
+    // Stop bounce after a delay
     IEnumerator StopBounceAfterDelay(Rigidbody2D rb)
     {
        

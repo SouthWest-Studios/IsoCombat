@@ -152,7 +152,7 @@ public class PlayerController : MonoBehaviour
 
 
     }
-
+    //Dash
     IEnumerator Dash()
     {
         canDash = false;
@@ -195,13 +195,14 @@ public class PlayerController : MonoBehaviour
         canDash = true;
     }
 
-
+    //Set color
     public void AssignColor(Color c)
     {
         var sr = playerSprite.GetComponent<SpriteRenderer>();
         if (sr) sr.color = c;
     }
 
+    //Player Movement
     void UpdateMovement()
     {
         Vector2 currentPosition = transform.position;
@@ -237,13 +238,14 @@ public class PlayerController : MonoBehaviour
         transform.position = newPosition;
     }
 
+    //Invulnerability
     void UpdateInvulnerability()
     {
         bool inputActivado = Input.GetMouseButtonDown(1) || Input.GetAxis("Fire2") > 0.1f;
     }
 
 
-
+    //Player Die
     void PlayerDie()
     {
         //GetComponent<CircleCollider2D>().enabled = false;
@@ -252,6 +254,7 @@ public class PlayerController : MonoBehaviour
         isDead = true;
     }
 
+    //Timer
     void UpdateTime()
     {
         timeCounter += Time.deltaTime;
@@ -273,7 +276,7 @@ public class PlayerController : MonoBehaviour
         //PlayerRuntimeStats.instance.gameStats.elapsedTime = timeCounter;
     }
 
-
+    
     public string GetTimeString()
     {
         //int totalSeconds = (Mathf.CeilToInt(PlayerRuntimeStats.instance.realTimeStats.currentMaxTime - timeCounter));
@@ -285,6 +288,7 @@ public class PlayerController : MonoBehaviour
         return "";
     }
 
+    //Take Damage
     public void TakeDamage(float amount)
     {
         haveDamage += amount;
@@ -298,13 +302,14 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    //Set Health
     public void SetHealth(float damage)
     {
         Debug.Log("damage: "+ damage);
         currentHealth -= damage;
         currentHealth = Mathf.Max(0, currentHealth);
     }
-
+    //Shoot Bullet
     public void ShootBullet()
     {
         Vector3 offset = transform.up * 0.8f;
@@ -327,7 +332,7 @@ public class PlayerController : MonoBehaviour
         StartCoroutine(DestroyBullet(bulletRb, 5f));
         Invoke(nameof(ResetShoot), shootCooldown);
     }
-
+    //Destroy Bullet
     private IEnumerator DestroyBullet(Rigidbody2D bulletRb, float time)
     {
         yield return new WaitForSeconds(time);
@@ -335,6 +340,7 @@ public class PlayerController : MonoBehaviour
         DestroyBullet(bulletRb);
     }
 
+    //Destroy Bullet
     public void DestroyBullet(Rigidbody2D bulletRb)
     {
         if (bulletRb != null)
@@ -343,11 +349,12 @@ public class PlayerController : MonoBehaviour
             Destroy(bulletRb.gameObject);
         }
     }
-
+    //Reset Shoot
     void ResetShoot()
     {
         canShoot = true;
     }
+    //Health Regen
     IEnumerator RegenRoutine()
     {
         
@@ -364,7 +371,7 @@ public class PlayerController : MonoBehaviour
             }
         }
     }
-
+    //Invisible
     IEnumerator Invisible() {
        
         while (isPlayerLocal && !isDead)
@@ -383,7 +390,7 @@ public class PlayerController : MonoBehaviour
             }
         }
     }
-
+    //Glow Effect
     IEnumerator GlowCorrutine()
     {
         

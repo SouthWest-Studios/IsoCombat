@@ -473,7 +473,7 @@ public class GameplayNet : MonoBehaviour
             StartCoroutine(storm.Shrink(sp.phase));
             return;
         }
-
+    }
 
         //Determine if the game is over
         void TryEndMatch()
@@ -615,6 +615,7 @@ public class GameplayNet : MonoBehaviour
             }
         }
     }
+    
     //Send message
     public void SendMessage(NetOperation op, string payloadJsonOrText)
     {
@@ -743,3 +744,4 @@ public class GameplayNet : MonoBehaviour
         net.SendMessage(NetOperation.STORM_PHASE, JsonUtility.ToJson(msg));
     }
 }
+

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
+using UnityEngine.SceneManagement;
 
 public class TCPClient : INetwork
 {
@@ -64,6 +65,10 @@ public class TCPClient : INetwork
                             break;
                         case NetOperation.HELLO:
                             SessionConfig.IsSpectator = string.Equals(msg.payload, "SPECTATOR", StringComparison.OrdinalIgnoreCase);
+                            if(SessionConfig.IsSpectator)
+                            {
+                                SceneManager.LoadScene("MainMenu");
+                            }
                             OnSystemMessage?.Invoke(SessionConfig.IsSpectator ? "Role: Spectator" : "Role: Player");
                             break;
                     }

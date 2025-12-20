@@ -1,6 +1,5 @@
 # GDD – DuelCremental
-
-![Logo](IsoCombat/Assets/Art/UI/Logo.png)
+<img width="1457" height="168" alt="Logo (10)" src="https://github.com/user-attachments/assets/ed3e67d7-6506-4596-9e8f-482ee5c18770" />
 
 ## Project Breakdown
 
